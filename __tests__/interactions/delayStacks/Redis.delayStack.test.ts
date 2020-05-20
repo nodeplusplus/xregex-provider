@@ -40,6 +40,8 @@ describe("delayStacks/RedisDelayStack", () => {
     it("should start/stop successfully", async () => {
       const delayStack = getDelayStack(container);
 
+      // Check call start multi time
+      await delayStack.start();
       await delayStack.start();
       await delayStack.stop();
     });

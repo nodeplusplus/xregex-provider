@@ -49,10 +49,12 @@ export class RedisStorage implements IStorage {
   }
 
   public async start() {
-    this.redis = await helpers.redis.connect(
-      this.connection.uri,
-      this.connection.opts
-    );
+    if (!this.redis) {
+      this.redis = await helpers.redis.connect(
+        this.connection.uri,
+        this.connection.opts
+      );
+    }
     this.redlock = new Redlock([this.redis]);
     await Promise.all([this.delayStack.start(), this.quotaManager.start()]);
 

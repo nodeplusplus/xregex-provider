@@ -43,6 +43,8 @@ describe("storages/RedisStorage", () => {
     it("should start/stop successfully", async () => {
       const storage = getStorage(container);
 
+      // Check call start multi time
+      await storage.start();
       await storage.start();
       await storage.stop();
     });

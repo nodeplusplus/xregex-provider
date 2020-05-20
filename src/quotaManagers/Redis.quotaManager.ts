@@ -37,10 +37,12 @@ export class RedisQuotaManager implements IQuotaManager {
   }
 
   public async start() {
-    this.redis = await helpers.redis.connect(
-      this.connection.uri,
-      this.connection.opts
-    );
+    if (!this.redis) {
+      this.redis = await helpers.redis.connect(
+        this.connection.uri,
+        this.connection.opts
+      );
+    }
 
     this.logger.info("XPROVIDER:QUOTA.REDIS.STARTED");
   }

@@ -33,10 +33,12 @@ export class RedisDelayStack implements IDelayStack {
   }
 
   public async start() {
-    this.redis = await helpers.redis.connect(
-      this.connection.uri,
-      this.connection.opts
-    );
+    if (!this.redis) {
+      this.redis = await helpers.redis.connect(
+        this.connection.uri,
+        this.connection.opts
+      );
+    }
 
     this.logger.info(`XPROVIDER:DELAY_STACK.REDIS.STARTED`);
   }
