@@ -61,9 +61,11 @@ jobs:
           command: npm run lint
 
   test:
-    - image: circleci/mongo:3.7.9
-    - image: circleci/redis:5.0.9
     <<: *defaults
+    docker:
+      - image: circleci/node:12.16.1
+      - image: circleci/mongo:3.7.9
+      - image: circleci/redis:5.0.9
 
     steps:
       - attach_workspace:
