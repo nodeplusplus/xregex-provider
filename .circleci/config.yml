@@ -2,8 +2,6 @@ defaults: &defaults
   working_directory: ~/code
   docker:
     - image: circleci/node:12.16.1
-    - image: circleci/mongo:3.7.9
-    - image: circleci/redis:5.0.9
 
 whitelist: &whitelist
   paths:
@@ -63,6 +61,8 @@ jobs:
           command: npm run lint
 
   test:
+    - image: circleci/mongo:3.7.9
+    - image: circleci/redis:5.0.9
     <<: *defaults
 
     steps:
