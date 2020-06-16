@@ -17,7 +17,7 @@ export class Builder implements IBuilder {
   protected container!: Container;
 
   public reset() {
-    this.container = new Container();
+    this.container = new Container({ defaultScope: "Singleton" });
   }
 
   public registerFactory() {
@@ -64,22 +64,15 @@ export class Builder implements IBuilder {
   }
 
   public setStorage(Storage: interfaces.Newable<IStorage>) {
-    this.container
-      .bind<IStorage>("XPROVIDER.STORAGE")
-      .to(Storage)
-      .inSingletonScope();
+    this.container.bind<IStorage>("XPROVIDER.STORAGE").to(Storage);
   }
   public setQuotaManager(QuotaManager: interfaces.Newable<IQuotaManager>) {
     this.container
       .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
-      .to(QuotaManager)
-      .inSingletonScope();
+      .to(QuotaManager);
   }
   public setDelayStack(DelayStack: interfaces.Newable<IDelayStack>) {
-    this.container
-      .bind<IDelayStack>("XPROVIDER.DELAY_STACK")
-      .to(DelayStack)
-      .inSingletonScope();
+    this.container.bind<IDelayStack>("XPROVIDER.DELAY_STACK").to(DelayStack);
   }
 
   private createDatasource(context: interfaces.Context) {

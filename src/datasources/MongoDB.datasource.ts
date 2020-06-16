@@ -36,7 +36,10 @@ export class MongoDBDatasource implements IDatasource {
   public async start() {
     try {
       const { connection: conn } = this.options;
-      this.client = await MongoClient.connect(conn.uri, conn.clientOpts);
+      if (!this.client) {
+        this.client = await MongoClient.connect(conn.uri, conn.clientOpts);
+      }
+
       this.db = this.client.db(conn.database);
       this.collection = this.db.collection(conn.collection);
     } catch {

@@ -55,7 +55,7 @@ export class RedisStorage implements IStorage {
         this.connection.opts
       );
     }
-    this.redlock = new Redlock([this.redis]);
+    if (!this.redlock) this.redlock = new Redlock([this.redis]);
     await Promise.all([this.delayStack.start(), this.quotaManager.start()]);
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STARTED");

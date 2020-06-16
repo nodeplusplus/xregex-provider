@@ -51,6 +51,13 @@ describe("datasources/MongoDBDatasource", () => {
       await datasource.stop();
     });
 
+    it("should start more than 1 time as well", async () => {
+      const datasource = generateDatasource(container);
+      await datasource.start();
+      await datasource.start();
+      await datasource.stop();
+    });
+
     it("should stop before start without error", async () => {
       const datasource = generateDatasource(container);
       await datasource.stop();
