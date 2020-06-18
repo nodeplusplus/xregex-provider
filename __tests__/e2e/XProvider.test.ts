@@ -9,6 +9,7 @@ import {
   IXProvider,
   IQuotaManager,
   IRotation,
+  IStorage,
   helpers,
 } from "../../src";
 
@@ -56,8 +57,8 @@ describe("XProvider", () => {
     const usedQuota = await quotaManager.get(storageIds[0]);
     expect(usedQuota).toBe(1);
 
-    const isInStack = await rotation.includes(storageIds, scopeKey);
-    expect(isInStack).toBeTruthy();
+    const isInRotation = await rotation.includes(storageIds, scopeKey);
+    expect(isInRotation).toBeTruthy();
   });
 
   it("should release item succesfully", async () => {
@@ -87,33 +88,48 @@ describe("XProvider", () => {
       const [, storageId] = await provider.acquire({ tags: [tag] });
       expect(storageId).toBeTruthy();
 
-      // Make sure delay stack is always filled with storageId
+      // Make sure rotation is always filled with storageId
       if (!storageIds.includes(storageId as string)) {
-        const isInStack = await rotation.includes(
+        const isInRotation = await rotation.includes(
           [storageId as string],
           scopeKey
         );
-        expect(isInStack).toBeTruthy();
+        expect(isInRotation).toBeTruthy();
 
         storageIds.push(storageId as string);
       }
 
       // We acquired an item before,
-      // so we had cleaned all item before push last item to our stack
+      // so we had cleaned all item before push last item to our rotation
       if (i === items.length - 1) {
-        const isCurrentItemInStack = await rotation.includes(
+        const isCurrentItemInRotation = await rotation.includes(
           [storageId as string],
           scopeKey
         );
-        expect(isCurrentItemInStack).toBeTruthy();
+        expect(isCurrentItemInRotation).toBeTruthy();
 
-        const isOtherItemsInStack = await rotation.includes(
+        const isOtherItemsInRotation = await rotation.includes(
           storageIds.filter((id) => id !== storageId),
           scopeKey
         );
-        expect(isOtherItemsInStack).toBeFalsy();
+        expect(isOtherItemsInRotation).toBeFalsy();
       }
     }
+  });
+
+  it("should deactivate entity successfully", async () => {
+    const deactivatedId = storageIds[0] as string;
+
+    await provider.deactivate(deactivatedId);
+
+    const storage = container.get<IStorage>("XPROVIDER.STORAGE");
+    const entity = await storage.get(deactivatedId);
+    expect(entity).toBeFalsy();
+  });
+
+  it("should ignore invalid id when deactivate resource", async () => {
+    const deactivatedId = faker.random.uuid();
+    await provider.deactivate(deactivatedId);
   });
 
   it("should stop successfully", async () => {

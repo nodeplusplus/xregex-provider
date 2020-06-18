@@ -11,6 +11,7 @@ export interface IXProvider {
   release(id: string, opts?: Partial<IStorageLookupOpts>): Promise<number>;
 
   clear(): Promise<void>;
+  deactivate(id: string): Promise<void>;
 }
 
 export interface IXProviderAcquireOpts {
@@ -23,6 +24,7 @@ export interface IXProviderEntity<Entity = any> {
   id: string;
   tags: string[];
   value: Entity;
+  deactivatedAt?: string | Date;
 }
 
 export interface IXProviderSettings {

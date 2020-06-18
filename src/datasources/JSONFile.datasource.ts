@@ -7,7 +7,7 @@ import {
   IDatasource,
   IDatasourceOpts,
   IDatasourceConnectionOpts,
-  IDatasourceRecord,
+  IXProviderEntity,
 } from "../types";
 
 @injectable()
@@ -19,7 +19,7 @@ export class JSONFileDatasource implements IDatasource {
     connection: Required<IDatasourceConnectionOpts>;
   };
 
-  private records: IDatasourceRecord[] = [];
+  private records: IXProviderEntity[] = [];
 
   public init(options: IDatasourceOpts) {
     this.id = options.id;
@@ -58,5 +58,5 @@ export class JSONFileDatasource implements IDatasource {
     });
   }
 
-  public async deactivate(id: string) {}
+  public async deactivate(entity: IXProviderEntity) {}
 }

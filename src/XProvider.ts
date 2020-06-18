@@ -74,4 +74,12 @@ export class XProvider implements IXProvider {
     await this.quotaManager.clear();
     await this.storage.clear();
   }
+
+  public async deactivate(storageId: string) {
+    const entity = await this.storage.get(storageId);
+    if (entity) {
+      await Promise.all(this.datasources.map((d) => d.deactivate(entity)));
+      await this.storage.deactivate(storageId);
+    }
+  }
 }

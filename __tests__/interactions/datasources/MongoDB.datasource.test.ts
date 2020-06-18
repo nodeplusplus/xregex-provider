@@ -10,14 +10,14 @@ import {
   MongoDBDatasource,
   IDatasource,
   IDatasourceOpts,
-  IDatasourceRecord,
+  IXProviderEntity,
   IXProviderSettings,
 } from "../../../src";
 
 const resourcesPath = path.resolve(__dirname, "../../../mocks/resources.json");
 const settingsPath = path.resolve(__dirname, "../../../mocks/settings.js");
 
-const resources: IDatasourceRecord[] = require(resourcesPath);
+const resources: IXProviderEntity[] = require(resourcesPath);
 const settings: IXProviderSettings = require(settingsPath);
 
 const options: IDatasourceOpts = {
@@ -100,7 +100,7 @@ describe("datasources/MongoDBDatasource", () => {
       const record = resources.find((r) => !r.deactivatedAt);
       const id = record?.id as string;
 
-      await datasource.deactivate("");
+      await datasource.deactivate({} as any);
       const updatedRecord = await (datasource as any).collection.findOne({
         id,
       });
@@ -109,12 +109,11 @@ describe("datasources/MongoDBDatasource", () => {
     });
 
     it("should do nothing with invalid id", async () => {
-      const record = resources.find((r) => !r.deactivatedAt);
-      const id = record?.id as string;
+      const record = resources.find((r) => !r.deactivatedAt) as any;
 
-      await datasource.deactivate(id);
+      await datasource.deactivate(record);
       const updatedRecord = await (datasource as any).collection.findOne({
-        id,
+        id: record.id,
       });
       expect(updatedRecord).toBeTruthy();
       expect(updatedRecord.deactivatedAt).toBeTruthy();

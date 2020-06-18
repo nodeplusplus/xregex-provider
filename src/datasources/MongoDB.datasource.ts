@@ -12,6 +12,7 @@ import {
   IDatasource,
   IDatasourceOpts,
   IDatasourceConnectionOpts,
+  IXProviderEntity,
 } from "../types";
 import helpers from "../helpers";
 
@@ -66,8 +67,8 @@ export class MongoDBDatasource implements IDatasource {
       .toArray();
   }
 
-  public async deactivate(id: string) {
-    const filters = helpers.mongodb.generateIdFilter(id);
+  public async deactivate(entity: IXProviderEntity) {
+    const filters = helpers.mongodb.generateIdFilter(entity.id);
     if (!filters) return;
 
     const operator = { $set: { deactivatedAt: new Date() } };

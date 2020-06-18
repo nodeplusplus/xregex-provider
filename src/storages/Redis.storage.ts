@@ -73,7 +73,7 @@ export class RedisStorage implements IStorage {
     return JSON.stringify(data || null);
   }
 
-  public deserialize<T>(data?: string): T | null {
+  public deserialize<T>(data?: string | null): T | null {
     try {
       return data ? JSON.parse(data) : null;
     } catch {
@@ -88,7 +88,7 @@ export class RedisStorage implements IStorage {
 
     const statuses = await Promise.all(
       entities.map(({ id, tags, value }) => {
-        const serialized = this.serialize(value);
+        const serialized = this.serialize({ id, tags, value });
         const storageId = helpers.redis.generateKey([...tags.sort(), id]);
         const response = this.redis.hset(bagName, storageId, serialized);
         return { [storageId]: !!response };
@@ -127,7 +127,7 @@ export class RedisStorage implements IStorage {
 
       // hscan return pair of key and value, should only using keys to validate
       const pairsKeyValue = _.chunk(keysValues, 2);
-      for (let [storageId, storageValue] of pairsKeyValue) {
+      for (let [storageId, serializedEntity] of pairsKeyValue) {
         // Lock executing item
         const lockedId = helpers.redis.generateKey(["locked", storageId]);
         const locked = await this.redlock
@@ -169,7 +169,7 @@ export class RedisStorage implements IStorage {
 
         // Return value
         id = storageId;
-        value = storageValue;
+        value = serializedEntity;
         break;
       }
 
@@ -192,5 +192,20 @@ export class RedisStorage implements IStorage {
     await helpers.redis.clear(this.redis);
     await this.rotation.clear();
     await this.quotaManager.clear();
+  }
+
+  public async get(id: string) {
+    if (!id) return null;
+
+    const bagName = this.settings.name;
+    const entity = await this.redis.hget(bagName, id);
+    return this.deserialize<IXProviderEntity>(entity);
+  }
+
+  public async deactivate(id: string) {
+    if (!id) return;
+
+    const bagName = this.settings.name;
+    await this.redis.hdel(bagName, id);
   }
 }

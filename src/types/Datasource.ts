@@ -6,7 +6,7 @@ export interface IDatasource {
   init(opts: IDatasourceOpts): void;
 
   feed(): Promise<IXProviderEntity[]>;
-  deactivate(id: string): Promise<void>;
+  deactivate(entity: IXProviderEntity): Promise<void>;
 }
 
 export interface IDatasourceOpts<CCO = any> {
@@ -22,11 +22,4 @@ export interface IDatasourceConnectionOpts<CO = any> {
   database?: string;
   collection?: string;
   clientOpts?: CO;
-}
-
-export interface IDatasourceRecord {
-  tags: string[];
-  id: string;
-  value: any;
-  deactivatedAt?: string | Date;
 }

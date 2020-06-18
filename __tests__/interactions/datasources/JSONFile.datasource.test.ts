@@ -10,13 +10,13 @@ import {
   JSONFileDatasource,
   IDatasource,
   IDatasourceOpts,
-  IDatasourceRecord,
+  IXProviderEntity,
 } from "../../../src";
 
 const resourcesPath = path.resolve(__dirname, "../../../mocks/resources.json");
 const settingsPath = path.resolve(__dirname, "../../../mocks/settings.js");
 
-const resources: IDatasourceRecord[] = require(resourcesPath);
+const resources: IXProviderEntity[] = require(resourcesPath);
 
 const options: IDatasourceOpts = {
   id: "file.json.test",
@@ -92,7 +92,7 @@ describe("datasources/JSONFileDatasource", () => {
     });
 
     it("should deactivate succesfully", async () => {
-      await datasource.deactivate(resources[0].id);
+      await datasource.deactivate(resources[0]);
     });
   });
 });

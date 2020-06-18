@@ -17,6 +17,7 @@ import {
   RedisRotation,
   IRotation,
   IXProviderEntity,
+  helpers,
 } from "../../../src";
 
 const redis = require("../../../mocks/helpers").redis;
@@ -121,29 +122,82 @@ describe("storages/RedisStorage", () => {
           .map(() => storage.lookup({ tags: ["proxy"] }))
       );
 
-      const [proxyValue] = values.find(([v]) => !!v) || [];
-      expect(proxyValue).toBe(proxy.value);
+      const [foundProxy] = values.find(([v]) => !!v) || [];
+      expect(foundProxy).toEqual(proxy);
     });
 
     it("should try X times before return falsy value", async () => {
-      const [proxyValue, storageId] = await storage.lookup({
+      const [foundProxy, storageId] = await storage.lookup({
         tags: ["proxy"],
         retry: 3,
       });
 
-      expect(proxyValue).toBeFalsy();
+      expect(foundProxy).toBeFalsy();
       expect(storageId).toBeFalsy();
     });
 
     it("should return valid entity (WITH scope)", async () => {
       const domain = faker.internet.domainName();
 
-      const [proxyValue] = await storage.lookup({
+      const [foundProxy] = await storage.lookup({
         tags: ["proxy"],
         scopes: [domain],
       });
 
-      expect(proxyValue).toBe(proxy.value);
+      expect(foundProxy).toEqual(proxy);
+    });
+  });
+
+  describe("get", () => {
+    const storageId = helpers.redis.generateKey([
+      ...entities[0].tags.sort(),
+      entities[0].id,
+    ]);
+    const storage = getStorage(container);
+    beforeAll(async () => {
+      await storage.start();
+      await storage.clear();
+      await storage.load(entities.slice(0, 1));
+    });
+    afterAll(async () => {
+      await storage.stop();
+    });
+
+    it("should return null if id is invalid", async () => {
+      expect(await storage.get("")).toBeNull();
+    });
+
+    it("should return entity successfully", async () => {
+      const entity = await storage.get(storageId);
+
+      expect(entity).toEqual(entities[0]);
+    });
+  });
+
+  describe("deactivate", () => {
+    const storageId = helpers.redis.generateKey([
+      ...entities[0].tags.sort(),
+      entities[0].id,
+    ]);
+    const storage = getStorage(container);
+    beforeAll(async () => {
+      await storage.start();
+      await storage.clear();
+      await storage.load(entities.slice(0, 1));
+    });
+    afterAll(async () => {
+      await storage.stop();
+    });
+
+    it("should do nothing with invalid id", async () => {
+      await storage.deactivate("");
+    });
+
+    it("should delete item from storage", async () => {
+      await storage.deactivate(storageId);
+
+      const entity = await storage.get(storageId);
+      expect(entity).toBeNull();
     });
   });
 

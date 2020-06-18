@@ -1,3 +1,5 @@
+import { IXProviderEntity } from "./Provider";
+
 export interface IStorage {
   start(opts?: any): Promise<void>;
   stop(opts?: any): Promise<void>;
@@ -5,9 +7,11 @@ export interface IStorage {
   serialize(data?: any): string;
   deserialize<T>(data?: string): T | null;
 
-  lookup<Entity>(opts: IStorageLookupOpts): Promise<[Entity?, string?]>;
+  lookup(opts: IStorageLookupOpts): Promise<[IXProviderEntity?, string?]>;
   load(entities: any[]): Promise<{ [name: string]: boolean }>;
   clear(): Promise<void>;
+  get(id: string): Promise<IXProviderEntity | null>;
+  deactivate(id: string): Promise<void>;
 }
 
 export interface IStorageOpts {
