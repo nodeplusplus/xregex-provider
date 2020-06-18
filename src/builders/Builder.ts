@@ -14,7 +14,7 @@ import * as datasources from "../datasources";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
 export class Builder implements IBuilder {
-  protected container!: Container;
+  private container!: Container;
 
   public reset() {
     this.container = new Container({ defaultScope: "Singleton" });
@@ -29,7 +29,9 @@ export class Builder implements IBuilder {
   public registerConnections(connections: { [name: string]: any }) {
     const names = Object.keys(connections);
     names.forEach((name) =>
-      this.container.bind(name).toConstantValue(connections[name])
+      this.container
+        .bind(`CONNECTIONS.${name.toUpperCase()}`)
+        .toConstantValue(connections[name])
     );
   }
 
@@ -44,15 +46,8 @@ export class Builder implements IBuilder {
     }
   }
 
-  public getContainer() {
-    return this.container;
-  }
-
   public setProvider(Provider: interfaces.Newable<IXProvider>) {
     this.container.bind<IXProvider>("XPROVIDER").to(Provider);
-  }
-  public getProvider() {
-    return this.container.get<IXProvider>("XPROVIDER");
   }
   public setLogger(logger: ILogger) {
     this.container.bind<ILogger>("LOGGER").toConstantValue(logger);
@@ -62,7 +57,6 @@ export class Builder implements IBuilder {
       .bind<IXProviderSettings>("XPROVIDER.SETTINGS")
       .toConstantValue(settings);
   }
-
   public setStorage(Storage: interfaces.Newable<IStorage>) {
     this.container.bind<IStorage>("XPROVIDER.STORAGE").to(Storage);
   }
@@ -73,6 +67,22 @@ export class Builder implements IBuilder {
   }
   public setRotation(Rotation: interfaces.Newable<IRotation>) {
     this.container.bind<IRotation>("XPROVIDER.ROTATION").to(Rotation);
+  }
+
+  public getContainer() {
+    return this.container;
+  }
+  public getProvider() {
+    return this.container.get<IXProvider>("XPROVIDER");
+  }
+  public getQuotaManager() {
+    return this.container.get<IQuotaManager>("XPROVIDER.QUOTA_MANAGER");
+  }
+  public getRotation() {
+    return this.container.get<IRotation>("XPROVIDER.ROTATION");
+  }
+  public getStorage() {
+    return this.container.get<IStorage>("XPROVIDER.STORAGE");
   }
 
   private createDatasource(context: interfaces.Context) {

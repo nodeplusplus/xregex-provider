@@ -12,15 +12,19 @@ export interface IBuilder {
   registerConnections(connections: { [name: string]: any }): void;
   registerDatasources(): void;
 
-  getContainer(): Container;
   setProvider(Provider: interfaces.Newable<IXProvider>): void;
-  getProvider(): IXProvider;
   setLogger(logger: ILogger): void;
   setSettings(settings: IXProviderSettings): void;
 
   setStorage(Storage: interfaces.Newable<IStorage>): void;
   setQuotaManager(QuotaManager: interfaces.Newable<IQuotaManager>): void;
   setRotation(Rotation: interfaces.Newable<IRotation>): void;
+
+  getContainer(): Container;
+  getProvider(): IXProvider;
+  getQuotaManager(): IQuotaManager;
+  getRotation(): IRotation;
+  getStorage(): IStorage;
 }
 
 export interface IDirector {

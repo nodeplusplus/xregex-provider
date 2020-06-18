@@ -26,6 +26,8 @@ const settings: IXProviderSettings = require(path.resolve(
   "../../../mocks/settings.js"
 ));
 
+// Please don't use factory to test
+// because redis is event base, using 1 connection to test is risky
 describe("storages/RedisStorage", () => {
   const entities: IXProviderEntity[] = new Array(100).fill(null).map(() => ({
     id: faker.random.uuid(),

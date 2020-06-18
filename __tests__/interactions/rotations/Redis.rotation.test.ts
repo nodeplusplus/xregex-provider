@@ -25,6 +25,8 @@ const settings: IXProviderSettings = require(path.resolve(
   "../../../mocks/settings.js"
 ));
 
+// Please don't use factory to test
+// because redis is event base, using 1 connection to test is risky
 describe("rotations/RedisRotation", () => {
   const collection = "test";
   const items = resources.map((r) => r.id);

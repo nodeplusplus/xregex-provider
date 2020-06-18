@@ -20,6 +20,8 @@ const settings: IXProviderSettings = require(path.resolve(
   "../../../mocks/settings.js"
 ));
 
+// Please don't use factory to test
+// because redis is event base, using 1 connection to test is risky
 describe("quotaManagers/RedisQuotaManager", () => {
   const container = new Container();
   container.bind<ILogger>("LOGGER").toConstantValue(createLogger());

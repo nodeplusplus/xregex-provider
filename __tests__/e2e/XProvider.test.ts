@@ -18,30 +18,38 @@ const resources = require(path.resolve(__dirname, "../../mocks/resources"));
 const settings = require(path.resolve(__dirname, "../../mocks/settings"));
 
 describe("XProvider", () => {
+  const builder = new Builder();
   let container: Container;
   let provider: IXProvider;
   let quotaManager: IQuotaManager;
   let rotation: IRotation;
+  let storage: IStorage;
   let storageIds: string[] = [];
   const scopeKey = helpers.redis.generateKey([]);
 
   beforeAll(async () => {
     await redis.clear();
 
-    const builder = new Builder();
     new Director().constructSimpleProvider(builder);
+    builder.registerConnections({
+      redis: {
+        uri: process.env.XPROVIDER_REDIS_URI || "redis://127.0.0.1:6379",
+        prefix: process.env.XPROVIDER_REDIS_PREFIX || "provider",
+      },
+    });
     builder.setLogger(createLogger());
     builder.setSettings(settings);
 
     container = builder.getContainer();
     provider = builder.getProvider();
+    quotaManager = builder.getQuotaManager();
+    rotation = builder.getRotation();
+    storage = builder.getStorage();
   });
 
   it("should start successfully", async () => {
     await provider.start();
-    // components will start with provider
-    quotaManager = container.get("XPROVIDER.QUOTA_MANAGER");
-    rotation = container.get("XPROVIDER.ROTATION");
+    expect(container.isBound("XPROVIDER.DATASOURCES")).toBeTruthy();
   });
 
   it("should acquire item succesfully", async () => {
@@ -122,7 +130,6 @@ describe("XProvider", () => {
 
     await provider.deactivate(deactivatedId);
 
-    const storage = container.get<IStorage>("XPROVIDER.STORAGE");
     const entity = await storage.get(deactivatedId);
     expect(entity).toBeFalsy();
   });
