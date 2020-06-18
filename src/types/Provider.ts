@@ -1,7 +1,7 @@
 import { IQuotaManagerOpts } from "./QuotaManager";
 import { IStorageLookupOpts, IStorageOpts } from "./Storages";
 import { IDatasourceOpts } from "./Datasource";
-import { IDelayStackOpts } from "./DelayStack";
+import { IRotationOpts } from "./Rotation";
 
 export interface IXProvider {
   start(opts?: any): Promise<void>;
@@ -29,5 +29,5 @@ export interface IXProviderSettings {
   datasources: Array<IDatasourceOpts>;
   quotaManager: IQuotaManagerOpts;
   storage: IStorageOpts;
-  delayStack?: IDelayStackOpts;
+  rotation?: IRotationOpts;
 }

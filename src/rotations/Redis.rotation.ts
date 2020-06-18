@@ -29,7 +29,7 @@ export class RedisRotation implements IRotation {
       ),
     };
     this.connection = { uri: redis.uri, opts: connOpts };
-    this.settings = { expiresIn: 900, ...settings.delayStack };
+    this.settings = { expiresIn: 900, ...settings.rotation };
   }
 
   public async start() {
