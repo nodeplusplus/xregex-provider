@@ -3,7 +3,7 @@ import { Container, interfaces } from "inversify";
 import { IXProvider, IXProviderSettings } from "./Provider";
 import { IStorage } from "./Storages";
 import { IQuotaManager } from "./QuotaManager";
-import { IDelayStack } from "./DelayStack";
+import { IRotation } from "./Rotation";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
 export interface IBuilder {
@@ -20,7 +20,7 @@ export interface IBuilder {
 
   setStorage(Storage: interfaces.Newable<IStorage>): void;
   setQuotaManager(QuotaManager: interfaces.Newable<IQuotaManager>): void;
-  setDelayStack(DelayStack: interfaces.Newable<IDelayStack>): void;
+  setRotation(Rotation: interfaces.Newable<IRotation>): void;
 }
 
 export interface IDirector {

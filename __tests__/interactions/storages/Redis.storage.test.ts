@@ -14,8 +14,8 @@ import {
   IXProviderSettings,
   IQuotaManager,
   RedisQuotaManager,
-  RedisDelayStack,
-  IDelayStack,
+  RedisRotation,
+  IRotation,
   IXProviderEntity,
 } from "../../../src";
 
@@ -177,8 +177,8 @@ function getStorage(container: Container): IStorage {
       .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
       .to(RedisQuotaManager);
   }
-  if (!container.isBound("XPROVIDER.DELAY_STACK")) {
-    container.bind<IDelayStack>("XPROVIDER.DELAY_STACK").to(RedisDelayStack);
+  if (!container.isBound("XPROVIDER.ROTATION")) {
+    container.bind<IRotation>("XPROVIDER.ROTATION").to(RedisRotation);
   }
 
   return container.resolve<IStorage>(RedisStorage);

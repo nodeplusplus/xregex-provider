@@ -8,7 +8,7 @@ import {
   Director,
   IXProvider,
   IQuotaManager,
-  IDelayStack,
+  IRotation,
   helpers,
 } from "../../src";
 
@@ -20,7 +20,7 @@ describe("XProvider", () => {
   let container: Container;
   let provider: IXProvider;
   let quotaManager: IQuotaManager;
-  let delayStack: IDelayStack;
+  let rotation: IRotation;
   let storageIds: string[] = [];
   const scopeKey = helpers.redis.generateKey([]);
 
@@ -40,7 +40,7 @@ describe("XProvider", () => {
     await provider.start();
     // components will start with provider
     quotaManager = container.get("XPROVIDER.QUOTA_MANAGER");
-    delayStack = container.get("XPROVIDER.DELAY_STACK");
+    rotation = container.get("XPROVIDER.ROTATION");
   });
 
   it("should acquire item succesfully", async () => {
@@ -56,7 +56,7 @@ describe("XProvider", () => {
     const usedQuota = await quotaManager.get(storageIds[0]);
     expect(usedQuota).toBe(1);
 
-    const isInStack = await delayStack.includes(storageIds, scopeKey);
+    const isInStack = await rotation.includes(storageIds, scopeKey);
     expect(isInStack).toBeTruthy();
   });
 
@@ -89,7 +89,7 @@ describe("XProvider", () => {
 
       // Make sure delay stack is always filled with storageId
       if (!storageIds.includes(storageId as string)) {
-        const isInStack = await delayStack.includes(
+        const isInStack = await rotation.includes(
           [storageId as string],
           scopeKey
         );
@@ -101,13 +101,13 @@ describe("XProvider", () => {
       // We acquired an item before,
       // so we had cleaned all item before push last item to our stack
       if (i === items.length - 1) {
-        const isCurrentItemInStack = await delayStack.includes(
+        const isCurrentItemInStack = await rotation.includes(
           [storageId as string],
           scopeKey
         );
         expect(isCurrentItemInStack).toBeTruthy();
 
-        const isOtherItemsInStack = await delayStack.includes(
+        const isOtherItemsInStack = await rotation.includes(
           storageIds.filter((id) => id !== storageId),
           scopeKey
         );

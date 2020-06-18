@@ -1,7 +1,7 @@
 import { IDirector, IBuilder } from "../types";
 import { RedisStorage } from "../storages";
 import { RedisQuotaManager } from "../quotaManagers";
-import { RedisDelayStack } from "../delayStacks";
+import { RedisRotation } from "../rotations";
 import { XProvider } from "../XProvider";
 
 export class Director implements IDirector {
@@ -18,7 +18,7 @@ export class Director implements IDirector {
 
     builder.setStorage(RedisStorage);
     builder.setQuotaManager(RedisQuotaManager);
-    builder.setDelayStack(RedisDelayStack);
+    builder.setRotation(RedisRotation);
     builder.setProvider(XProvider);
   }
 }

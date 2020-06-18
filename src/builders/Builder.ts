@@ -7,7 +7,7 @@ import {
   IBuilder,
   IStorage,
   IQuotaManager,
-  IDelayStack,
+  IRotation,
   IXProviderSettings,
 } from "../types";
 import * as datasources from "../datasources";
@@ -71,8 +71,8 @@ export class Builder implements IBuilder {
       .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
       .to(QuotaManager);
   }
-  public setDelayStack(DelayStack: interfaces.Newable<IDelayStack>) {
-    this.container.bind<IDelayStack>("XPROVIDER.DELAY_STACK").to(DelayStack);
+  public setRotation(Rotation: interfaces.Newable<IRotation>) {
+    this.container.bind<IRotation>("XPROVIDER.ROTATION").to(Rotation);
   }
 
   private createDatasource(context: interfaces.Context) {

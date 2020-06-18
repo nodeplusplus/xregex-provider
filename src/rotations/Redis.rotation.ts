@@ -2,17 +2,17 @@ import { injectable, inject } from "inversify";
 import { Redis, RedisOptions } from "ioredis";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
-import { IDelayStack, IXProviderSettings, IDelayStackOpts } from "../types";
+import { IRotation, IXProviderSettings, IRotationOpts } from "../types";
 import helpers from "../helpers";
 
 @injectable()
-export class RedisDelayStack implements IDelayStack {
+export class RedisRotation implements IRotation {
   public static KEYS_DELIMITER = "/";
 
   @inject("LOGGER") private logger!: ILogger;
 
   private connection: { uri: string; opts: RedisOptions };
-  private settings: Required<IDelayStackOpts>;
+  private settings: Required<IRotationOpts>;
   private redis!: Redis;
 
   constructor(
@@ -23,8 +23,8 @@ export class RedisDelayStack implements IDelayStack {
     const connOpts = {
       ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.prefix, "delay_stack"],
-        RedisDelayStack.KEYS_DELIMITER,
+        [redis.prefix, "rotation"],
+        RedisRotation.KEYS_DELIMITER,
         true
       ),
     };
@@ -40,12 +40,12 @@ export class RedisDelayStack implements IDelayStack {
       );
     }
 
-    this.logger.info(`XPROVIDER:DELAY_STACK.REDIS.STARTED`);
+    this.logger.info(`XPROVIDER:ROTATION.REDIS.STARTED`);
   }
   public async stop() {
     await helpers.redis.disconnect(this.redis);
 
-    this.logger.info(`XPROVIDER:DELAY_STACK.REDIS.STOPPED`);
+    this.logger.info(`XPROVIDER:ROTATION.REDIS.STOPPED`);
   }
 
   public async add(items: string[], collection: string) {

@@ -1,4 +1,4 @@
-export interface IDelayStack {
+export interface IRotation {
   start(opts?: any): Promise<void>;
   stop(opts?: any): Promise<void>;
 
@@ -8,6 +8,6 @@ export interface IDelayStack {
   clear(collection?: string): Promise<void>;
 }
 
-export interface IDelayStackOpts {
+export interface IRotationOpts {
   expiresIn?: number;
 }

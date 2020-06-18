@@ -9,8 +9,8 @@ import {
 } from "@nodeplusplus/xregex-logger";
 
 import {
-  RedisDelayStack,
-  IDelayStack,
+  RedisRotation,
+  IRotation,
   IXProviderSettings,
   IXProviderEntity,
 } from "../../../src";
@@ -25,7 +25,7 @@ const settings: IXProviderSettings = require(path.resolve(
   "../../../mocks/settings.js"
 ));
 
-describe("delayStacks/RedisDelayStack", () => {
+describe("rotations/RedisRotation", () => {
   const collection = "test";
   const items = resources.map((r) => r.id);
 
@@ -38,63 +38,63 @@ describe("delayStacks/RedisDelayStack", () => {
 
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
-      const delayStack = getDelayStack(container);
+      const rotation = getRotation(container);
 
       // Check call start multi time
-      await delayStack.start();
-      await delayStack.start();
-      await delayStack.stop();
+      await rotation.start();
+      await rotation.start();
+      await rotation.stop();
     });
   });
 
   describe("add", () => {
-    const delayStack = getDelayStack(container);
+    const rotation = getRotation(container);
 
     beforeAll(async () => {
-      await delayStack.start();
-      await (delayStack as any).redis.flushdb();
+      await rotation.start();
+      await (rotation as any).redis.flushdb();
     });
     afterAll(async () => {
-      await delayStack.stop();
+      await rotation.stop();
     });
 
     it("should return false if items was empty array", async () => {
-      const status = await delayStack.add([], collection);
+      const status = await rotation.add([], collection);
 
       expect(status).toBeFalsy();
     });
 
     it("should add items to delay collection succesfully", async () => {
-      const status = await delayStack.add(items, collection);
+      const status = await rotation.add(items, collection);
 
       expect(status).toBeTruthy();
     });
   });
 
   describe("includes", () => {
-    const delayStack = getDelayStack(container);
+    const rotation = getRotation(container);
 
     beforeAll(async () => {
-      await delayStack.start();
-      await (delayStack as any).redis.flushdb();
+      await rotation.start();
+      await (rotation as any).redis.flushdb();
 
-      await delayStack.add(items, collection);
+      await rotation.add(items, collection);
     });
     afterAll(async () => {
-      await delayStack.stop();
+      await rotation.stop();
     });
 
     it("should return false if items was empty array", async () => {
-      const status = await delayStack.includes([], collection);
+      const status = await rotation.includes([], collection);
 
       expect(status).toBeFalsy();
     });
 
     it("should return true if all items were exist in collection", async () => {
-      const exists = await delayStack.includes([resources[0].id], collection);
+      const exists = await rotation.includes([resources[0].id], collection);
       expect(exists).toBeTruthy();
 
-      const noExists = await delayStack.includes(
+      const noExists = await rotation.includes(
         [...resources.map((r) => r.id), faker.random.uuid()],
         collection
       );
@@ -103,27 +103,27 @@ describe("delayStacks/RedisDelayStack", () => {
   });
 
   describe("find", () => {
-    const delayStack = getDelayStack(container);
+    const rotation = getRotation(container);
 
     const generate = () => `${faker.internet.ip()}/${+new Date()}`;
     const items10000 = new Array(10000).fill(null).map(generate);
 
     beforeAll(async () => {
-      await delayStack.start();
-      await (delayStack as any).redis.flushdb();
+      await rotation.start();
+      await (rotation as any).redis.flushdb();
 
       await Promise.all(
         _.chunk(items10000, 10).map((i, index) =>
-          delayStack.add(i, [collection, index].join("/"))
+          rotation.add(i, [collection, index].join("/"))
         )
       );
     });
     afterAll(async () => {
-      await delayStack.stop();
+      await rotation.stop();
     });
 
     it("should return all items of collection", async () => {
-      const foundItems = await delayStack.find(collection);
+      const foundItems = await rotation.find(collection);
 
       expect(foundItems.length).toBe(items10000.length);
       expect(foundItems.sort()).toEqual(items10000.sort());
@@ -131,7 +131,7 @@ describe("delayStacks/RedisDelayStack", () => {
   });
 });
 
-function getDelayStack(container: Container): IDelayStack {
+function getRotation(container: Container): IRotation {
   bindRedis(container, {
     uri: process.env.TEST_XPROVIDER_REDIS_URI || "redis://127.0.0.1:6379/0",
     prefix: "provider_test",
@@ -142,7 +142,7 @@ function getDelayStack(container: Container): IDelayStack {
       .toConstantValue(settings);
   }
 
-  return container.resolve<IDelayStack>(RedisDelayStack);
+  return container.resolve<IRotation>(RedisRotation);
 }
 
 function bindRedis(

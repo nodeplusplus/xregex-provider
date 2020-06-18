@@ -9,7 +9,7 @@ import {
   IStorage,
   IStorageLookupOpts,
   IQuotaManager,
-  IDelayStack,
+  IRotation,
   IStorageOpts,
   IXProviderEntity,
 } from "../types";
@@ -24,8 +24,8 @@ export class RedisStorage implements IStorage {
   @inject("XPROVIDER.QUOTA_MANAGER")
   private quotaManager!: IQuotaManager;
 
-  @inject("XPROVIDER.DELAY_STACK")
-  private delayStack!: IDelayStack;
+  @inject("XPROVIDER.ROTATION")
+  private rotation!: IRotation;
 
   private connection: { uri: string; opts: RedisOptions };
   private settings: IStorageOpts;
@@ -56,7 +56,7 @@ export class RedisStorage implements IStorage {
       );
     }
     if (!this.redlock) this.redlock = new Redlock([this.redis]);
-    await Promise.all([this.delayStack.start(), this.quotaManager.start()]);
+    await Promise.all([this.rotation.start(), this.quotaManager.start()]);
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STARTED");
   }
@@ -64,7 +64,7 @@ export class RedisStorage implements IStorage {
   public async stop() {
     if (this.redlock) await this.redlock.quit();
     await helpers.redis.disconnect(this.redis);
-    await Promise.all([this.delayStack.stop(), this.quotaManager.stop()]);
+    await Promise.all([this.rotation.stop(), this.quotaManager.stop()]);
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STOPPED");
   }
@@ -140,7 +140,7 @@ export class RedisStorage implements IStorage {
           continue;
         }
 
-        const isUsed = await this.delayStack.includes([storageId], scopeKey);
+        const isUsed = await this.rotation.includes([storageId], scopeKey);
         if (isUsed) {
           this.logger.debug("XPROVIDER:STORAGE.REDIS.EXCLUDE", {
             id: storageId,
@@ -161,7 +161,7 @@ export class RedisStorage implements IStorage {
         }
 
         // Add to excludes
-        await this.delayStack.add([storageId], scopeKey);
+        await this.rotation.add([storageId], scopeKey);
         // Charge quota
         await this.quotaManager.charge(quotaId, 1);
         // Unlock item
@@ -178,7 +178,7 @@ export class RedisStorage implements IStorage {
 
     // Retry
     if (typeof id === "undefined" && retry > 0) {
-      await this.delayStack.clear(scopeKey);
+      await this.rotation.clear(scopeKey);
       const nextOpts = { ...opts, retry: retry - 1 };
       this.logger.warn("XPROVIDER:STORAGE.REDIS.RETRY", nextOpts);
       return this.lookup(nextOpts);
@@ -190,7 +190,7 @@ export class RedisStorage implements IStorage {
 
   public async clear() {
     await helpers.redis.clear(this.redis);
-    await this.delayStack.clear();
+    await this.rotation.clear();
     await this.quotaManager.clear();
   }
 }
