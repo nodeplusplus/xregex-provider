@@ -41,7 +41,7 @@ export class RedisStorage implements IStorage {
     const connOpts = {
       ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.database, "storage"],
+        [redis.database, "xprovider", "storage"],
         RedisStorage.KEYS_DELIMITER,
         true
       ),

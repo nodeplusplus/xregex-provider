@@ -28,7 +28,7 @@ export class RedisRotation implements IRotation {
     const connOpts = {
       ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.database, "rotation"],
+        [redis.database, "xprovider", "rotation"],
         RedisRotation.KEYS_DELIMITER,
         true
       ),

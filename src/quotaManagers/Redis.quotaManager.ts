@@ -29,7 +29,7 @@ export class RedisQuotaManager implements IQuotaManager {
     const connOpts = {
       ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.database, "quota"],
+        [redis.database, "xprovider", "quota"],
         RedisQuotaManager.KEYS_DELIMITER,
         true
       ),
