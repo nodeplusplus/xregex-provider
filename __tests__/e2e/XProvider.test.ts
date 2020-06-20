@@ -15,7 +15,8 @@ import {
 
 const redis = require("../../mocks/helpers").redis;
 const resources = require(path.resolve(__dirname, "../../mocks/resources"));
-const settings = require(path.resolve(__dirname, "../../mocks/settings"));
+const settings = require("../../mocks/settings");
+const template = require("../../mocks/template");
 
 describe("XProvider", () => {
   const builder = new Builder();
@@ -30,13 +31,7 @@ describe("XProvider", () => {
   beforeAll(async () => {
     await redis.clear();
 
-    new Director().constructSimpleProvider(builder);
-    builder.registerConnections({
-      redis: {
-        uri: process.env.XPROVIDER_REDIS_URI || "redis://127.0.0.1:6379",
-        prefix: process.env.XPROVIDER_REDIS_PREFIX || "provider",
-      },
-    });
+    new Director().constructProviderFromTemplate(builder, template);
     builder.setLogger(createLogger());
     builder.setSettings(settings);
 
@@ -71,7 +66,9 @@ describe("XProvider", () => {
 
   it("should release item succesfully", async () => {
     const remainQuota = await provider.release(storageIds[0]);
-    expect(remainQuota).toBe(settings.quotaManager.quotas.proxy.point);
+    expect(remainQuota).toBe(
+      template.XProvider.quotaManager.quotas.proxy.point
+    );
 
     const usedQuota = await quotaManager.get(storageIds[0]);
     expect(usedQuota).toBe(0);
@@ -82,7 +79,9 @@ describe("XProvider", () => {
     const domain = faker.internet.domainName();
     const remainQuota = await provider.release(id, { scopes: [domain] });
 
-    expect(remainQuota).toBe(settings.quotaManager.quotas.proxy.point);
+    expect(remainQuota).toBe(
+      template.XProvider.quotaManager.quotas.proxy.point
+    );
   });
 
   it("should acquire each item before restart the flow", async () => {

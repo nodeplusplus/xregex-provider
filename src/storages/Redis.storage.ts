@@ -5,6 +5,7 @@ import { injectable, inject } from "inversify";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
+  Connection,
   IXProviderSettings,
   IStorage,
   IStorageLookupOpts,
@@ -33,13 +34,14 @@ export class RedisStorage implements IStorage {
   private redlock!: Redlock;
 
   constructor(
-    @inject("CONNECTIONS.REDIS") redis: { uri: string; prefix: string },
+    @inject("CONNECTIONS.REDIS") redis: Connection<RedisOptions>,
     @inject("XPROVIDER.SETTINGS")
     settings: IXProviderSettings
   ) {
     const connOpts = {
+      ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.prefix, "storage"],
+        [redis.database, "storage"],
         RedisStorage.KEYS_DELIMITER,
         true
       ),

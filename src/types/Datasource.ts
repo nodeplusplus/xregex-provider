@@ -1,3 +1,4 @@
+import { Connection } from "./Common";
 import { IXProviderEntity } from "./Provider";
 
 export interface IDatasource {
@@ -13,13 +14,6 @@ export interface IDatasourceOpts<CCO = any> {
   id: string;
   type: string;
   opts: {
-    connection: IDatasourceConnectionOpts<CCO>;
+    connection: Connection<CCO>;
   };
-}
-
-export interface IDatasourceConnectionOpts<CO = any> {
-  uri: string;
-  database?: string;
-  collection?: string;
-  clientOpts?: CO;
 }

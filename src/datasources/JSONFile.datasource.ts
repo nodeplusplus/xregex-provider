@@ -4,9 +4,9 @@ import moment from "moment";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
+  Connection,
   IDatasource,
   IDatasourceOpts,
-  IDatasourceConnectionOpts,
   IXProviderEntity,
 } from "../types";
 
@@ -16,7 +16,7 @@ export class JSONFileDatasource implements IDatasource {
 
   protected id!: string;
   protected options!: {
-    connection: Required<IDatasourceConnectionOpts>;
+    connection: Required<Connection>;
   };
 
   private records: IXProviderEntity[] = [];

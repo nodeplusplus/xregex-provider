@@ -1,10 +1,11 @@
 import { Container, interfaces } from "inversify";
+import { ILogger } from "@nodeplusplus/xregex-logger";
 
+import { IXProviderTemplate } from "./Template";
 import { IXProvider, IXProviderSettings } from "./Provider";
 import { IStorage } from "./Storages";
 import { IQuotaManager } from "./QuotaManager";
 import { IRotation } from "./Rotation";
-import { ILogger } from "@nodeplusplus/xregex-logger";
 
 export interface IBuilder {
   reset(): void;
@@ -29,4 +30,8 @@ export interface IBuilder {
 
 export interface IDirector {
   constructSimpleProvider(builder: IBuilder): void;
+  constructProviderFromTemplate(
+    builder: IBuilder,
+    template: IXProviderTemplate
+  ): void;
 }

@@ -50,9 +50,21 @@ export class Builder implements IBuilder {
     this.container.bind<IXProvider>("XPROVIDER").to(Provider);
   }
   public setLogger(logger: ILogger) {
+    if (this.container.isBound("LOGGER")) {
+      this.container.rebind<ILogger>("LOGGER").toConstantValue(logger);
+      return;
+    }
+
     this.container.bind<ILogger>("LOGGER").toConstantValue(logger);
   }
   public setSettings(settings: IXProviderSettings) {
+    if (this.container.isBound("XPROVIDER.SETTINGS")) {
+      this.container
+        .rebind<IXProviderSettings>("XPROVIDER.SETTINGS")
+        .toConstantValue(settings);
+      return;
+    }
+
     this.container
       .bind<IXProviderSettings>("XPROVIDER.SETTINGS")
       .toConstantValue(settings);

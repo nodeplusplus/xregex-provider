@@ -2,7 +2,12 @@ import { injectable, inject } from "inversify";
 import { Redis, RedisOptions } from "ioredis";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
-import { IRotation, IXProviderSettings, IRotationOpts } from "../types";
+import {
+  Connection,
+  IRotation,
+  IXProviderSettings,
+  IRotationOpts,
+} from "../types";
 import helpers from "../helpers";
 
 @injectable()
@@ -17,13 +22,13 @@ export class RedisRotation implements IRotation {
 
   constructor(
     @inject("CONNECTIONS.REDIS")
-    redis: { uri: string; prefix: string; clientOpts?: RedisOptions },
+    redis: Connection<RedisOptions>,
     @inject("XPROVIDER.SETTINGS") settings: IXProviderSettings
   ) {
     const connOpts = {
       ...redis.clientOpts,
       keyPrefix: helpers.redis.generateKey(
-        [redis.prefix, "rotation"],
+        [redis.database, "rotation"],
         RedisRotation.KEYS_DELIMITER,
         true
       ),

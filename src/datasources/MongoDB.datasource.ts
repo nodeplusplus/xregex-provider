@@ -9,9 +9,9 @@ import {
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
+  Connection,
   IDatasource,
   IDatasourceOpts,
-  IDatasourceConnectionOpts,
   IXProviderEntity,
 } from "../types";
 import helpers from "../helpers";
@@ -26,7 +26,7 @@ export class MongoDBDatasource implements IDatasource {
 
   protected id!: string;
   protected options!: {
-    connection: Required<IDatasourceConnectionOpts<MongoClientOptions>>;
+    connection: Required<Connection<MongoClientOptions>>;
   };
 
   public init(options: IDatasourceOpts) {
