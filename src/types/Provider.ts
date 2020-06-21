@@ -7,7 +7,9 @@ export interface IXProvider {
   start(opts?: any): Promise<void>;
   stop(opts?: any): Promise<void>;
 
-  acquire<T>(opts: IXProviderAcquireOpts): Promise<[T?, string?]>;
+  acquire<T>(
+    opts: IXProviderAcquireOpts
+  ): Promise<[IXProviderEntity<T>?, string?]>;
   release(id: string, opts?: Partial<IStorageLookupOpts>): Promise<number>;
 
   clear(): Promise<void>;

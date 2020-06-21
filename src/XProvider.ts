@@ -4,6 +4,7 @@ import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
   IXProvider,
+  IXProviderEntity,
   IQuotaManager,
   IDatasource,
   IStorage,
@@ -57,9 +58,9 @@ export class XProvider implements IXProvider {
     this.logger.info("XPROVIDER:STOPPED");
   }
 
-  public async acquire<Entity>(opts: IStorageLookupOpts) {
+  public async acquire<T>(opts: IStorageLookupOpts) {
     const [value, storageId] = await this.storage.lookup(opts);
-    return [value, storageId] as [Entity?, string?];
+    return [value, storageId] as [IXProviderEntity<T>?, string?];
   }
 
   public async release(storageId: string, opts?: IStorageLookupOpts) {
