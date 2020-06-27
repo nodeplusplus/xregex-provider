@@ -1,135 +1,100 @@
-import path from "path";
 import _ from "lodash";
-import { Container } from "inversify";
-import {
-  createSilent as createLogger,
-  ILogger,
-} from "@nodeplusplus/xregex-logger";
+import moment from "moment";
+import { Collection as MongoCollection } from "mongodb";
 
-import {
-  MongoDBDatasource,
-  IDatasource,
-  IDatasourceOpts,
-  IXProviderEntity,
-  IXProviderSettings,
-} from "../../../src";
+import { Builder, Director, IXProviderEntity } from "../../../src";
+const resources = require("../../../mocks/resources");
+const template = require("../../../mocks/template");
 
-const resourcesPath = path.resolve(__dirname, "../../../mocks/resources.json");
-const settingsPath = path.resolve(__dirname, "../../../mocks/settings.js");
-
-const resources: IXProviderEntity[] = require(resourcesPath);
-const settings: IXProviderSettings = require(settingsPath);
-
-const options: IDatasourceOpts = {
-  id: "mongodb.test",
-  type: MongoDBDatasource.name,
-  opts: {
-    connection: { uri: "" },
-  },
-};
-
-describe("datasources/MongoDBDatasource", () => {
-  const container = new Container();
-  container.bind<ILogger>("LOGGER").toConstantValue(createLogger());
-
+describe("MongoDB.datasources", () => {
   describe("start/stop", () => {
-    it("should throw error if connection.uri is not valid", async () => {
-      const datasource = container.resolve<IDatasource>(MongoDBDatasource);
-
-      expect.assertions(1);
-      try {
-        await datasource.start();
-      } catch (e) {
-        expect(e.message).toMatch("MONGODB.CONNECTED_FAILED");
-      }
-    });
-
     it("should start/stop successfully", async () => {
-      const datasource = generateDatasource(container);
+      const builder = new Builder();
+      new Director().constructProviderFromTemplate(builder, template);
 
-      await datasource.start();
+      const datasource = builder.getDatasource();
+      // Stop before start
       await datasource.stop();
-    });
-
-    it("should start more than 1 time as well", async () => {
-      const datasource = generateDatasource(container);
+      // Start normally
       await datasource.start();
+      // Call start 2 times
       await datasource.start();
-      await datasource.stop();
-    });
-
-    it("should stop before start without error", async () => {
-      const datasource = generateDatasource(container);
+      // Stop normally
       await datasource.stop();
     });
   });
 
   describe("feed", () => {
-    const datasource = generateDatasource(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    let collection: MongoCollection;
 
     beforeAll(async () => {
+      const datasource = builder.getDatasource();
       await datasource.start();
 
-      await (datasource as any).collection.deleteMany();
-      await (datasource as any).collection.insertMany(resources);
+      collection = (datasource as any).collection;
+      await collection.deleteMany({});
+      await collection.insertMany(resources);
     });
     afterAll(async () => {
+      const datasource = builder.getDatasource();
       await datasource.stop();
     });
 
-    it("should return active records", async () => {
+    it("should return all matched records", async () => {
+      const datasource = builder.getDatasource();
       const records = await datasource.feed();
+
       expect(records.length).toBeTruthy();
+      // We have only 1 non-expired record here
+      expect(records.filter((r) => r.deactivatedAt).length).toBe(1);
     });
   });
 
   describe("deactivate", () => {
-    const datasource = generateDatasource(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    let collection: MongoCollection;
 
     beforeAll(async () => {
+      const datasource = builder.getDatasource();
       await datasource.start();
 
-      await (datasource as any).collection.deleteMany();
-      await (datasource as any).collection.insertMany(resources);
+      collection = (datasource as any).collection;
+      await collection.deleteMany({});
+      await collection.insertMany(resources);
     });
     afterAll(async () => {
+      const datasource = builder.getDatasource();
       await datasource.stop();
     });
 
-    it("should do nothing with invalid id", async () => {
-      const record = resources.find((r) => !r.deactivatedAt);
-      const id = record?.id as string;
+    it("should do notthing with invalid record", async () => {
+      const datasource = builder.getDatasource();
 
-      await datasource.deactivate({} as any);
-      const updatedRecord = await (datasource as any).collection.findOne({
-        id,
-      });
-      expect(updatedRecord).toBeTruthy();
-      expect(updatedRecord.deactivatedAt).toBeFalsy();
+      await datasource.deactivate({ id: null } as any);
+
+      const records = await datasource.feed();
+      expect(records.length).toBeTruthy();
+      // We have only 1 non-expired record here and didn't touch it
+      expect(records.filter((r) => r.deactivatedAt).length).toBe(1);
     });
 
-    it("should do nothing with invalid id", async () => {
-      const record = resources.find((r) => !r.deactivatedAt) as any;
+    it("should deactivate record successfully", async () => {
+      const datasource = builder.getDatasource();
+      const validRecords = await datasource.feed();
 
-      await datasource.deactivate(record);
-      const updatedRecord = await (datasource as any).collection.findOne({
-        id: record.id,
-      });
-      expect(updatedRecord).toBeTruthy();
-      expect(updatedRecord.deactivatedAt).toBeTruthy();
+      const willInactiveRecord = validRecords
+        .filter((r) => r.deactivatedAt)
+        .pop() as IXProviderEntity;
+      await datasource.deactivate(willInactiveRecord);
+
+      const record = (await collection.findOne<IXProviderEntity>({
+        id: willInactiveRecord.id,
+      })) as IXProviderEntity;
+      expect(record && record.deactivatedAt).toBeTruthy();
+      expect(moment(record.deactivatedAt).isBefore(new Date()));
     });
   });
 });
-
-function generateDatasource(container: Container): IDatasource {
-  const datasource = container.resolve<IDatasource>(MongoDBDatasource);
-  const mongoSettings = settings.datasources.find(
-    (d) => d.type === MongoDBDatasource.name
-  );
-  const initOpts: IDatasourceOpts = _.merge({}, options, {
-    opts: { connection: mongoSettings?.opts.connection },
-  });
-  datasource.init(initOpts);
-
-  return datasource;
-}

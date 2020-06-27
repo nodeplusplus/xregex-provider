@@ -1,145 +1,147 @@
-import path from "path";
+import { Redis } from "ioredis";
+import helpers from "@nodeplusplus/xregex-helpers";
 import faker from "faker";
-import { Container } from "inversify";
-import { createSilent as createLogger } from "@nodeplusplus/xregex-logger";
 
-import {
-  Builder,
-  Director,
-  IXProvider,
-  IQuotaManager,
-  IRotation,
-  IStorage,
-  helpers,
-} from "../../src";
-
-const redis = require("../../mocks/helpers").redis;
-const resources = require(path.resolve(__dirname, "../../mocks/resources"));
-const settings = require("../../mocks/settings");
+import { Builder, Director } from "../../src";
 const template = require("../../mocks/template");
 
 describe("XProvider", () => {
-  const builder = new Builder();
-  let container: Container;
-  let provider: IXProvider;
-  let quotaManager: IQuotaManager;
-  let rotation: IRotation;
-  let storage: IStorage;
-  let storageIds: string[] = [];
-  const scopeKey = helpers.redis.generateKey([]);
-
+  let redis: Redis;
   beforeAll(async () => {
-    await redis.clear();
+    redis = await helpers.redis.connect(template.connections.redis);
+  });
+  afterAll(async () => {
+    await helpers.redis.disconnect(redis);
+  });
 
+  describe("start/stop", () => {
+    it("should start/stop successfully", async () => {
+      const builder = new Builder();
+      new Director().constructProviderFromTemplate(builder, template);
+
+      const xprovider = builder.getProvider();
+      await xprovider.start();
+      await xprovider.stop();
+    });
+  });
+
+  describe("acquire", () => {
+    const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
-    builder.setLogger(createLogger());
-    builder.setSettings(settings);
+    const xprovider = builder.getProvider();
+    const quotaManager = builder.getQuotaManager();
 
-    container = builder.getContainer();
-    provider = builder.getProvider();
-    quotaManager = builder.getQuotaManager();
-    rotation = builder.getRotation();
-    storage = builder.getStorage();
-  });
-
-  it("should start successfully", async () => {
-    await provider.start();
-    expect(container.isBound("XPROVIDER.DATASOURCES")).toBeTruthy();
-  });
-
-  it("should acquire item succesfully", async () => {
     const tag = "proxy";
-    const [value, storageId] = await provider.acquire({ tags: [tag] });
+    const scopes = [faker.internet.domainName()];
+    beforeAll(async () => {
+      await redis.flushall();
+      await xprovider.start();
+    });
+    afterAll(async () => {
+      await xprovider.stop();
+    });
 
-    expect(value).toBeTruthy();
-    expect(storageId).toBeTruthy();
-    expect(storageId?.includes(tag)).toBeTruthy();
+    it("should acquire resource successfully", async () => {
+      const [value, storageId] = await xprovider.acquire({ tags: [tag] });
 
-    storageIds.push(storageId as string);
-
-    const usedQuota = await quotaManager.get(storageIds[0]);
-    expect(usedQuota).toBe(1);
-
-    const isInRotation = await rotation.includes(storageIds, scopeKey);
-    expect(isInRotation).toBeTruthy();
-  });
-
-  it("should release item succesfully", async () => {
-    const remainQuota = await provider.release(storageIds[0]);
-    expect(remainQuota).toBe(
-      template.XProvider.quotaManager.quotas.proxy.point
-    );
-
-    const usedQuota = await quotaManager.get(storageIds[0]);
-    expect(usedQuota).toBe(0);
-  });
-
-  it("should release non-exist id as well", async () => {
-    const id = faker.random.uuid();
-    const domain = faker.internet.domainName();
-    const remainQuota = await provider.release(id, { scopes: [domain] });
-
-    expect(remainQuota).toBe(
-      template.XProvider.quotaManager.quotas.proxy.point
-    );
-  });
-
-  it("should acquire each item before restart the flow", async () => {
-    const tag = "proxy";
-
-    const items: Array<{
-      value: any;
-    }> = resources.filter((r: { tags: string[] }) => r.tags.includes(tag));
-
-    for (let i = 0; i < items.length; i++) {
-      const [, storageId] = await provider.acquire({ tags: [tag] });
+      expect(value).toBeTruthy();
       expect(storageId).toBeTruthy();
+      expect(value?.tags.includes(tag)).toBeTruthy();
 
-      // Make sure rotation is always filled with storageId
-      if (!storageIds.includes(storageId as string)) {
-        const isInRotation = await rotation.includes(
-          [storageId as string],
-          scopeKey
-        );
-        expect(isInRotation).toBeTruthy();
+      expect(await quotaManager.get(storageId as string)).toBe(1);
+    });
 
-        storageIds.push(storageId as string);
-      }
+    it("should acquire resource with scope as well", async () => {
+      const options = { tags: [tag], scopes };
+      const [value, storageId] = await xprovider.acquire(options);
 
-      // We acquired an item before,
-      // so we had cleaned all item before push last item to our rotation
-      if (i === items.length - 1) {
-        const isCurrentItemInRotation = await rotation.includes(
-          [storageId as string],
-          scopeKey
-        );
-        expect(isCurrentItemInRotation).toBeTruthy();
+      expect(value).toBeTruthy();
+      expect(storageId).toBeTruthy();
+      expect(value?.tags.includes(tag)).toBeTruthy();
 
-        const isOtherItemsInRotation = await rotation.includes(
-          storageIds.filter((id) => id !== storageId),
-          scopeKey
-        );
-        expect(isOtherItemsInRotation).toBeFalsy();
-      }
-    }
+      // make sure we didn't touch other resource
+      expect(await quotaManager.get(storageId as string)).toBe(1);
+    });
   });
 
-  it("should deactivate entity successfully", async () => {
-    const deactivatedId = storageIds[0] as string;
+  describe("release", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const xprovider = builder.getProvider();
+    const quotaManager = builder.getQuotaManager();
 
-    await provider.deactivate(deactivatedId);
+    const tag = "proxy";
+    const scopes = [faker.internet.domainName()];
 
-    const entity = await storage.get(deactivatedId);
-    expect(entity).toBeFalsy();
+    beforeAll(async () => {
+      await redis.flushall();
+      await xprovider.start();
+    });
+    afterAll(async () => {
+      await xprovider.stop();
+    });
+
+    it("should release resource successfully", async () => {
+      const [, storageId] = await xprovider.acquire({ tags: [tag] });
+      expect(await quotaManager.get(storageId as string)).toBe(1);
+
+      const point = await xprovider.release(storageId as string);
+      expect(point).toBe(0);
+    });
+
+    it("should release resource with scope as well", async () => {
+      const options = { tags: [tag], scopes };
+      const [, storageId] = await xprovider.acquire(options);
+
+      const point = await xprovider.release(storageId as string, { scopes });
+      expect(point).toBe(0);
+    });
   });
 
-  it("should ignore invalid id when deactivate resource", async () => {
-    const deactivatedId = faker.random.uuid();
-    await provider.deactivate(deactivatedId);
+  describe("deactivate", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const xprovider = builder.getProvider();
+
+    const id = faker.random.uuid();
+
+    beforeAll(async () => {
+      await redis.flushall();
+      await xprovider.start();
+    });
+    afterAll(async () => {
+      await xprovider.stop();
+    });
+
+    it("should do notthing if id was not found", async () => {
+      expect(await xprovider.deactivate(id)).toBeUndefined();
+    });
+
+    it("should deactivate successfully", async () => {
+      const [, storageId] = await xprovider.acquire({ tags: ["proxy"] });
+
+      expect(await xprovider.deactivate(storageId as string)).toBe(storageId);
+    });
   });
 
-  it("should stop successfully", async () => {
-    await provider.clear();
-    await provider.stop();
+  describe("clear", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const xprovider = builder.getProvider();
+
+    beforeAll(async () => {
+      await redis.flushall();
+      await xprovider.start();
+    });
+    afterAll(async () => {
+      await xprovider.stop();
+    });
+
+    it("should clear all items successfully", async () => {
+      await xprovider.clear();
+
+      const keys = await redis.keys("*");
+      expect(keys.length).toBeFalsy();
+    });
   });
 });

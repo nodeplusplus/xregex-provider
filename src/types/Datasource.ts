@@ -1,19 +1,15 @@
-import { Connection } from "./Common";
+import { GenericObject } from "./Common";
 import { IXProviderEntity } from "./Provider";
 
-export interface IDatasource {
-  start(opts?: any): Promise<void>;
-  stop(opts?: any): Promise<void>;
-  init(opts: IDatasourceOpts): void;
+export interface IXProviderDatasource {
+  start(options?: any): Promise<void>;
+  stop(options?: any): Promise<void>;
 
   feed(): Promise<IXProviderEntity[]>;
   deactivate(entity: IXProviderEntity): Promise<void>;
 }
 
-export interface IDatasourceOpts<CCO = any> {
-  id: string;
-  type: string;
-  opts: {
-    connection: Connection<CCO>;
-  };
+export interface IXProviderDatasourceOptions {
+  collection: string;
+  conditions: GenericObject[];
 }

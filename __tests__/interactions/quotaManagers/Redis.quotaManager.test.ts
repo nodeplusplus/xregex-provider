@@ -1,214 +1,176 @@
-import path from "path";
-import _ from "lodash";
 import faker from "faker";
-import { RedisOptions } from "ioredis";
-import { Container } from "inversify";
-import {
-  createSilent as createLogger,
-  ILogger,
-} from "@nodeplusplus/xregex-logger";
 
-import {
-  RedisQuotaManager,
-  IQuotaManager,
-  IXProviderSettings,
-} from "../../../src";
+import { Builder, Director } from "../../../src";
+const template = require("../../../mocks/template");
 
-const redis = require("../../../mocks/helpers").redis;
-const settings: IXProviderSettings = require(path.resolve(
-  __dirname,
-  "../../../mocks/settings.js"
-));
-
-// Please don't use factory to test
-// because redis is event base, using 1 connection to test is risky
-describe("quotaManagers/RedisQuotaManager", () => {
-  const container = new Container();
-  container.bind<ILogger>("LOGGER").toConstantValue(createLogger());
-
-  beforeAll(async () => {
-    await redis.clear();
-  });
-
+describe("Redis.quotaManager", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
-      const quotaManager = getQuotaManager(container);
+      const builder = new Builder();
+      new Director().constructProviderFromTemplate(builder, template);
 
+      const quotaManager = builder.getQuotaManager();
+      // Stop before start
+      await quotaManager.stop();
+      // Start normally
       await quotaManager.start();
+      // Call start 2 times
+      await quotaManager.start();
+      // Stop normally
       await quotaManager.stop();
     });
   });
 
   describe("charge", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const quotaManager = builder.getQuotaManager();
+
     const id = faker.random.uuid();
-    const quotaManager = getQuotaManager(container);
+    let quota = 0;
+
     beforeAll(async () => {
       await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
+      await quotaManager.clear();
     });
     afterAll(async () => {
       await quotaManager.stop();
     });
 
-    it("should charge quota with default point", async () => {
-      const newPoint = await quotaManager.charge(id);
-      expect(newPoint).toBe(1);
+    it("should charge quota point successfully", async () => {
+      quota++; // charged 1 quota point
+      const point = await quotaManager.charge(id);
+
+      expect(point).toBe(quota);
     });
 
-    it("should charge quota by additional point", async () => {
-      const point = faker.random.number({ min: 1 });
-      const newPoint = await quotaManager.charge(id, point);
-      expect(newPoint).toBeGreaterThan(point);
+    it("should charge quota with your point as well", async () => {
+      const chargedQuota = faker.random.number({ min: 2, max: 10 });
+      quota += chargedQuota;
+
+      const point = await quotaManager.charge(id, chargedQuota);
+
+      expect(point).toBe(quota);
     });
   });
 
   describe("refund", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const quotaManager = builder.getQuotaManager();
+
     const id = faker.random.uuid();
-    const quotaManager = getQuotaManager(container);
+    let quota = faker.random.number({ min: 10, max: 20 });
+
     beforeAll(async () => {
       await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
+      await quotaManager.clear();
+      await quotaManager.charge(id, quota);
     });
     afterAll(async () => {
       await quotaManager.stop();
     });
 
-    it("should refund quota with default point", async () => {
-      const newPoint = await quotaManager.refund(id);
-      expect(newPoint).toBe(1);
+    it("should refund quota with your point successfully", async () => {
+      const refundQuota = faker.random.number({ min: 2, max: 10 });
+      quota -= refundQuota;
+
+      const point = await quotaManager.refund(id, refundQuota);
+
+      expect(point).toBe(quota);
     });
 
-    it("should refund quota by additional point", async () => {
-      const point = faker.random.number({ min: 1 });
-      const newPoint = await quotaManager.refund(id, point);
-      expect(newPoint).toBeLessThan(point);
+    it("should refund with default quota point as well", async () => {
+      // refund 1 quota point
+      --quota;
+      const point = await quotaManager.refund(id);
+
+      expect(point).toBe(quota);
     });
   });
 
   describe("reached", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const quotaManager = builder.getQuotaManager();
+
     const id = faker.random.uuid();
-    const quotaManager = getQuotaManager(container);
+
     beforeAll(async () => {
       await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
+      await quotaManager.clear();
     });
     afterAll(async () => {
       await quotaManager.stop();
     });
 
-    it("should return testing result", async () => {
-      const isReached = await quotaManager.reached(id);
-      expect(isReached).toBe(false);
-    });
+    it("should test our id is reached quota configs or not", async () => {
+      const quotaConfigs = quotaManager.getQuota(id);
 
-    it("should refund quota by additional point", async () => {
-      await quotaManager.charge(id);
-      const isReached = await quotaManager.reached(id);
-      expect(isReached).toBe(true);
+      expect(await quotaManager.reached(id)).toBe(false);
+
+      // use all quota point
+      await quotaManager.charge(id, quotaConfigs.point);
+
+      expect(await quotaManager.reached(id)).toBe(true);
     });
   });
 
   describe("get", () => {
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const quotaManager = builder.getQuotaManager();
+
     const id = faker.random.uuid();
-    const quotaManager = getQuotaManager(container);
+
     beforeAll(async () => {
       await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
+      await quotaManager.clear();
     });
     afterAll(async () => {
       await quotaManager.stop();
     });
 
-    it("should return quota of item", async () => {
-      const beforeQuota = await quotaManager.get(id);
-      expect(beforeQuota).toBe(0);
+    it("should get zero if quota point was not set", async () => {
+      expect(await quotaManager.get(id)).toBe(0);
+    });
 
+    it("should get current quota point", async () => {
       await quotaManager.charge(id);
 
-      const afterQuota = await quotaManager.get(id);
-      expect(afterQuota).toBe(1);
+      expect(await quotaManager.get(id)).toBe(1);
     });
   });
 
   describe("getQuota", () => {
-    let defaultQuota: any;
-    const quotaManager = getQuotaManager(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const quotaManager = builder.getQuotaManager();
+
+    const id = faker.random.uuid();
+
     beforeAll(async () => {
       await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
-    });
-    afterAll(async () => {
-      await quotaManager.stop();
-    });
-
-    it("should return default quota if key is not matched any quota settings", () => {
-      const key = [
-        faker.internet.domainName(),
-        faker.random.uuid(),
-        faker.random.number(),
-      ].join("/");
-
-      defaultQuota = quotaManager.getQuota(key);
-      expect(defaultQuota.point).toBeTruthy();
-      expect(defaultQuota.duration).toBeTruthy();
-    });
-
-    it("should return matched quota settings", () => {
-      const key = [
-        Object.keys(settings.quotaManager.quotas).pop(),
-        faker.random.uuid(),
-      ].join("/");
-
-      const quota = quotaManager.getQuota(key);
-      expect(quota.point).toBeTruthy();
-      expect(quota.duration).toBeTruthy();
-
-      expect(quota).not.toEqual(defaultQuota);
-    });
-  });
-
-  describe("clear", () => {
-    const quotaManager = getQuotaManager(container);
-    beforeAll(async () => {
-      await quotaManager.start();
-      await (quotaManager as any).redis.flushdb();
-    });
-    afterAll(async () => {
-      await quotaManager.stop();
-    });
-
-    it("should clear data succesfully", async () => {
       await quotaManager.clear();
+    });
+    afterAll(async () => {
+      await quotaManager.stop();
+    });
+
+    it("should return default quota configs if key was not match any configs", () => {
+      const quota = quotaManager.getQuota(id);
+
+      expect(quota.point).toBe(1);
+      expect(quota.duration).toBe(60);
+    });
+
+    it("should return matched quota configs", () => {
+      const ratemLimits = template.XProvider.quotaManager.options.ratemLimits;
+      const key = Object.keys(ratemLimits)[0];
+
+      const quota = quotaManager.getQuota([key, id].join("/"));
+
+      expect(quota).toEqual(ratemLimits[key]);
     });
   });
 });
-
-function getQuotaManager(container: Container): IQuotaManager {
-  bindRedis(container, {
-    uri: process.env.TEST_XPROVIDER_REDIS_URI || "redis://127.0.0.1:6379/0",
-    prefix: "provider_test",
-  });
-  if (!container.isBound("XPROVIDER.SETTINGS")) {
-    container
-      .bind<IXProviderSettings>("XPROVIDER.SETTINGS")
-      .toConstantValue(settings);
-  }
-
-  return container.resolve<IQuotaManager>(RedisQuotaManager);
-}
-
-function bindRedis(
-  container: Container,
-  redis: { uri: string; prefix: string; clientOpts?: RedisOptions }
-) {
-  if (container.isBound("CONNECTIONS.REDIS")) {
-    container
-      .rebind<{ uri: string; prefix: string }>("CONNECTIONS.REDIS")
-      .toConstantValue(redis);
-    return;
-  }
-
-  container
-    .bind<{ uri: string; prefix: string }>("CONNECTIONS.REDIS")
-    .toConstantValue(redis);
-}

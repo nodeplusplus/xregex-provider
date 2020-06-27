@@ -1,54 +1,35 @@
-import { injectable, inject } from "inversify";
+import { injectable, inject, optional } from "inversify";
 import { Redis, RedisOptions } from "ioredis";
 import { ILogger } from "@nodeplusplus/xregex-logger";
+import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IRotation,
-  IXProviderSettings,
-  IRotationOpts,
+  IXProviderRotation,
+  IXProviderRotationOptions,
 } from "../types";
-import helpers from "../helpers";
 
 @injectable()
-export class RedisRotation implements IRotation {
-  public static KEYS_DELIMITER = "/";
-
+export class RedisRotation implements IXProviderRotation {
   @inject("LOGGER") private logger!: ILogger;
+  @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
-  private connection: { uri: string; opts: RedisOptions };
-  private settings: Required<IRotationOpts>;
+  @inject("XPROVIDER.ROTATION.OPTIONS")
+  private options!: IXProviderRotationOptions;
+
   private redis!: Redis;
-
-  constructor(
-    @inject("CONNECTIONS.REDIS")
-    redis: Connection<RedisOptions>,
-    @inject("XPROVIDER.SETTINGS") settings: IXProviderSettings
-  ) {
-    const connOpts = {
-      ...redis.clientOpts,
-      keyPrefix: helpers.redis.generateKey(
-        [redis.database, "xprovider", "rotation"],
-        RedisRotation.KEYS_DELIMITER,
-        true
-      ),
-    };
-    this.connection = { uri: redis.uri, opts: connOpts };
-    this.settings = { expiresIn: 900, ...settings.rotation };
-  }
 
   public async start() {
     if (!this.redis) {
-      this.redis = await helpers.redis.connect(
-        this.connection.uri,
-        this.connection.opts
-      );
+      const scopes = ["xprovider", "rotation"];
+      this.redis = await helpers.redis.connect(this.connection, scopes);
     }
 
-    this.logger.info(`XPROVIDER:ROTATION.REDIS.STARTED`);
+    this.logger.info("XPROVIDER:ROTATION.REDIS.STARTED");
   }
+
   public async stop() {
-    await helpers.redis.disconnect(this.redis);
+    if (this.redis) await helpers.redis.disconnect(this.redis);
 
     this.logger.info(`XPROVIDER:ROTATION.REDIS.STOPPED`);
   }
@@ -59,7 +40,7 @@ export class RedisRotation implements IRotation {
     const added = await this.redis.sadd(collection, ...items);
     const expired = await this.redis.expire(
       collection,
-      this.settings.expiresIn
+      this.options.expiresIn || 300 // seconds
     );
     return Boolean(added && expired);
   }
@@ -71,33 +52,6 @@ export class RedisRotation implements IRotation {
       items.map((item) => this.redis.sismember(collection, item))
     );
     return status.every(Boolean);
-  }
-
-  public async find(collection: string) {
-    const keyPrefix = this.connection.opts.keyPrefix as string;
-    const matchPrefix = [keyPrefix, collection].filter(Boolean).join("");
-
-    let items: string[] = [];
-    let cursor = 0;
-
-    while (cursor >= 0) {
-      const [cursorIndex, keys] = await this.redis.scan(
-        cursor,
-        "MATCH",
-        `${matchPrefix}*`
-      );
-
-      // When cursorIndex is "0", that mean no more data
-      cursor = Number(cursorIndex) > 0 ? Number(cursorIndex) : -1;
-
-      for (let key of keys) {
-        const setsKey = key.replace(keyPrefix, "");
-        const values = await this.redis.smembers(setsKey);
-        items = items.concat(values);
-      }
-    }
-
-    return Array.from(new Set(items));
   }
 
   public async clear(collection?: string) {

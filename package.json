@@ -48,18 +48,24 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@nodeplusplus/xregex-helpers": "^1.0.1",
     "@nodeplusplus/xregex-logger": "^1.0.0",
-    "@types/ioredis": "^4.16.1",
+    "@types/ioredis": "^4.16.7",
+    "@types/joi": "^14.3.4",
     "@types/lodash": "^4.14.149",
     "@types/mongodb": "^3.5.16",
+    "@types/mustache": "^4.0.1",
     "@types/redlock": "^4.0.1",
     "inversify": "^5.0.1",
     "ioredis": "^4.16.3",
+    "joi": "^14.3.1",
     "lodash": "^4.17.15",
     "moment": "^2.25.3",
     "mongodb": "^3.5.7",
+    "mustache": "^4.0.1",
     "redlock": "^4.1.0",
     "reflect-metadata": "^0.1.13",
+    "sift": "^13.1.10",
     "tslib": "^1.11.1"
   },
   "husky": {

@@ -1,22 +1,17 @@
-import { IQuotaManagerOpts } from "./QuotaManager";
-import { IStorageLookupOpts, IStorageOpts } from "./Storages";
-import { IDatasourceOpts } from "./Datasource";
-import { IRotationOpts } from "./Rotation";
-
 export interface IXProvider {
-  start(opts?: any): Promise<void>;
-  stop(opts?: any): Promise<void>;
+  start(options?: any): Promise<void>;
+  stop(options?: any): Promise<void>;
 
   acquire<T>(
-    opts: IXProviderAcquireOpts
+    options: IXProviderOptions
   ): Promise<[IXProviderEntity<T>?, string?]>;
-  release(id: string, opts?: Partial<IStorageLookupOpts>): Promise<number>;
+  release(id: string, options?: Partial<IXProviderOptions>): Promise<number>;
 
+  deactivate(id: string): Promise<string | void>;
   clear(): Promise<void>;
-  deactivate(id: string): Promise<void>;
 }
 
-export interface IXProviderAcquireOpts {
+export interface IXProviderOptions {
   tags: string[];
   scopes?: string[];
   retry?: number;
@@ -27,11 +22,4 @@ export interface IXProviderEntity<Entity = any> {
   tags: string[];
   value: Entity;
   deactivatedAt?: string | Date;
-}
-
-export interface IXProviderSettings {
-  datasources: Array<IDatasourceOpts>;
-  quotaManager: IQuotaManagerOpts;
-  storage: IStorageOpts;
-  rotation?: IRotationOpts;
 }

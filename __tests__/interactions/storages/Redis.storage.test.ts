@@ -1,257 +1,278 @@
-import path from "path";
-import _ from "lodash";
 import faker from "faker";
-import { RedisOptions } from "ioredis";
-import { Container } from "inversify";
-import {
-  createSilent as createLogger,
-  ILogger,
-} from "@nodeplusplus/xregex-logger";
+import helpers from "@nodeplusplus/xregex-helpers";
 
-import {
-  RedisStorage,
-  IStorage,
-  IXProviderSettings,
-  IQuotaManager,
-  RedisQuotaManager,
-  RedisRotation,
-  IRotation,
-  IXProviderEntity,
-  helpers,
-} from "../../../src";
+import { Builder, Director, IXProviderEntity } from "../../../src";
+const template = require("../../../mocks/template");
+const resources = require("../../../mocks/resources");
 
-const redis = require("../../../mocks/helpers").redis;
-const settings: IXProviderSettings = require(path.resolve(
-  __dirname,
-  "../../../mocks/settings.js"
-));
-
-// Please don't use factory to test
-// because redis is event base, using 1 connection to test is risky
-describe("storages/RedisStorage", () => {
-  const entities: IXProviderEntity[] = new Array(100).fill(null).map(() => ({
-    id: faker.random.uuid(),
-    tags: faker.lorem.words().split(" "),
-    value: faker.internet.ip(),
-  }));
-
-  const container = new Container();
-  container.bind<ILogger>("LOGGER").toConstantValue(createLogger());
-
-  beforeAll(async () => {
-    await redis.clear();
-  });
-
+describe("Redis.storage", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
-      const storage = getStorage(container);
+      const builder = new Builder();
+      new Director().constructProviderFromTemplate(builder, template);
 
-      // Check call start multi time
-      await storage.start();
-      await storage.start();
+      const storage = builder.getStorage();
+      // Stop before start
       await storage.stop();
-    });
-
-    it("should be ok to stop before start", async () => {
-      const storage = getStorage(container);
+      // Start normally
+      await storage.start();
+      // Call start 2 times
+      await storage.start();
+      // Stop normally
       await storage.stop();
     });
   });
 
   describe("serialize", () => {
-    it("should return serialized data", () => {
-      const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
 
-      expect(storage.serialize(1)).toBe(JSON.stringify(1));
-      expect(storage.serialize()).toBe(JSON.stringify(null));
+    beforeAll(async () => {
+      await storage.start();
+      await storage.clear();
+    });
+    afterAll(async () => {
+      await storage.stop();
+    });
+
+    it("should return serialized data if it is defined", () => {
+      expect(storage.serialize(false)).toBe(JSON.stringify(false));
       expect(storage.serialize(null)).toBe(JSON.stringify(null));
-      expect(storage.serialize({ value: 1 })).toBe(
-        JSON.stringify({ value: 1 })
-      );
+
+      const data = { id: faker.random.uuid() };
+      expect(storage.serialize(data)).toBe(JSON.stringify(data));
+    });
+
+    it("should return stringify of null if data is undefined", () => {
+      expect(storage.serialize()).toBe(JSON.stringify(null));
     });
   });
 
   describe("deserialize", () => {
-    it("should return deserialized data", () => {
-      const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
+    const quotaManager = builder.getQuotaManager();
+    const rotation = builder.getRotation();
 
-      expect(storage.deserialize("string")).toBeNull();
+    beforeAll(async () => {
+      await storage.start();
+      await storage.clear();
+    });
+    afterAll(async () => {
+      await storage.stop();
+    });
+
+    it("should return parsed data successfully", () => {
+      const data = { id: faker.random.uuid() };
+
+      expect(storage.deserialize(storage.serialize(data))).toEqual(data);
+    });
+
+    it("should return null if data was not truthy value", () => {
       expect(storage.deserialize()).toBeNull();
-      expect(storage.deserialize(JSON.stringify({ value: 1 }))).toEqual({
-        value: 1,
-      });
+      expect(storage.deserialize(null as any)).toBeNull();
+      expect(storage.deserialize("")).toBeNull();
+    });
+
+    it("should return null if parse was failed", () => {
+      expect(storage.deserialize("{]}")).toBeNull();
     });
   });
 
   describe("load", () => {
-    const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
+    const quotaManager = builder.getQuotaManager();
+    const rotation = builder.getRotation();
+
     beforeAll(async () => {
       await storage.start();
-      await (storage as any).redis.flushdb();
+      await storage.clear();
     });
     afterAll(async () => {
       await storage.stop();
     });
 
-    it("should load entities successfully", async () => {
-      const statuses = await storage.load(entities);
+    it("should load all entities successfully", async () => {
+      const entities = await storage.load(resources);
 
-      expect(Object.values(statuses).every(Boolean)).toBeTruthy();
-      expect(Object.values(statuses).length).toBe(entities.length);
+      const status = Object.values(entities);
+
+      expect(status.length).toEqual(Object.keys(entities).length);
+      expect(status.every(Boolean)).toBeTruthy();
     });
   });
 
   describe("lookup", () => {
-    const proxy: IXProviderEntity = {
-      id: "127.0.0.1",
-      tags: ["proxy"],
-      value: `http://127.0.0.1:8080`,
-    };
-    const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
+    const quotaManager = builder.getQuotaManager();
+    const rotation = builder.getRotation();
+
+    // enrich total entities
+    const entities = new Array(faker.random.number({ min: 100, max: 300 }))
+      .fill(null)
+      .map(() => ({
+        id: faker.random.uuid(),
+        tags: faker.lorem
+          .sentence()
+          .split(" ")
+          .concat(faker.random.word())
+          .concat(faker.internet.domainName()),
+        value: {
+          username: faker.internet.userName(),
+        },
+      }));
+    const tag = "proxy";
+    let storageIds: string[] = resources
+      .filter((r: { tags: string[] }) => r.tags.includes(tag))
+      .map((r: { id: string; tags: string[] }) =>
+        helpers.redis.generateKey([...r.tags.sort(), r.id])
+      )
+      .sort();
+
     beforeAll(async () => {
       await storage.start();
-      await (storage as any).redis.flushdb();
-      await storage.load([...entities, proxy]);
+      await storage.clear();
+      await storage.load(entities);
+      await storage.load(resources);
     });
     afterAll(async () => {
       await storage.stop();
     });
 
-    it("should return valid entity", async () => {
-      const values = await Promise.all(
-        new Array(1000)
+    it("should only return entities matched your conditions", async () => {
+      const foundIds: string[] = [];
+
+      const results = await Promise.all(
+        new Array(storageIds.length)
           .fill(null)
-          .map(() => storage.lookup({ tags: ["proxy"] }))
+          .map(() => storage.lookup({ tags: [tag] }))
       );
 
-      const [foundProxy] = values.find(([v]) => !!v) || [];
-      expect(foundProxy).toEqual(proxy);
+      for (const [entity, storageId] of results) {
+        expect(entity).toBeTruthy();
+        expect(storageId).toBeTruthy();
+
+        expect(storageIds.includes(storageId as string)).toBeTruthy();
+        foundIds.push(storageId as string);
+      }
+
+      expect(storageIds).toEqual(foundIds.sort());
     });
 
-    it("should try X times before return falsy value", async () => {
-      const [foundProxy, storageId] = await storage.lookup({
-        tags: ["proxy"],
-        retry: 3,
+    it("should retry by your configs", async () => {
+      const [entity, storageId] = await storage.lookup({
+        tags: [tag],
+        retry: 0,
       });
 
-      expect(foundProxy).toBeFalsy();
+      expect(entity).toBeFalsy();
       expect(storageId).toBeFalsy();
     });
 
-    it("should return valid entity (WITH scope)", async () => {
-      const domain = faker.internet.domainName();
+    it("should return entities base on scopes as well", async () => {
+      const scopes = [faker.random.uuid(), faker.internet.domainName()];
+      const foundIds: string[] = [];
 
-      const [foundProxy] = await storage.lookup({
-        tags: ["proxy"],
-        scopes: [domain],
-      });
+      // find all entities with tag
+      const results = await Promise.all(
+        // extra step will return falsy value
+        // because of quota limit rate - 1 point
+        // Using too large number here to make sure lock will be failed
+        // and continue other round
+        new Array(1000)
+          .fill(null)
+          .map(() => storage.lookup({ tags: [tag], scopes }))
+      );
 
-      expect(foundProxy).toEqual(proxy);
+      for (const [entity, storageId] of results) {
+        if (entity && storageId) foundIds.push(storageId);
+      }
+
+      expect(storageIds).toEqual(foundIds.sort());
     });
   });
 
   describe("get", () => {
-    const storageId = helpers.redis.generateKey([
-      ...entities[0].tags.sort(),
-      entities[0].id,
-    ]);
-    const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
+    const quotaManager = builder.getQuotaManager();
+    const rotation = builder.getRotation();
+
+    const id = faker.random.uuid();
+
     beforeAll(async () => {
       await storage.start();
       await storage.clear();
-      await storage.load(entities.slice(0, 1));
     });
     afterAll(async () => {
       await storage.stop();
     });
 
-    it("should return null if id is invalid", async () => {
+    it("should return entity successfully", async () => {
+      const entity: IXProviderEntity = {
+        id,
+        tags: [],
+        value: { username: faker.internet.userName() },
+      };
+
+      // load first
+      await storage.load([entity]);
+      // then get that entity
+      expect(await storage.get(id)).toEqual(entity);
+      // finally clear all
+      await storage.clear();
+    });
+
+    it("should return null if id is falsy", async () => {
       expect(await storage.get("")).toBeNull();
     });
 
-    it("should return entity successfully", async () => {
-      const entity = await storage.get(storageId);
-
-      expect(entity).toEqual(entities[0]);
+    it("should return null if id is not exist", async () => {
+      expect(await storage.get(id)).toBeNull();
     });
   });
 
   describe("deactivate", () => {
-    const storageId = helpers.redis.generateKey([
-      ...entities[0].tags.sort(),
-      entities[0].id,
-    ]);
-    const storage = getStorage(container);
+    const builder = new Builder();
+    new Director().constructProviderFromTemplate(builder, template);
+    const storage = builder.getStorage();
+    const quotaManager = builder.getQuotaManager();
+    const rotation = builder.getRotation();
+
+    const id = faker.random.uuid();
+
     beforeAll(async () => {
       await storage.start();
       await storage.clear();
-      await storage.load(entities.slice(0, 1));
     });
     afterAll(async () => {
       await storage.stop();
     });
 
-    it("should do nothing with invalid id", async () => {
-      await storage.deactivate("");
+    it("should remove entity successfully", async () => {
+      const entity: IXProviderEntity = {
+        id,
+        tags: [],
+        value: { username: faker.internet.userName() },
+      };
+
+      // load first
+      await storage.load([entity]);
+      // then deactivate
+      await storage.deactivate(id);
+      // finally ensure it's not exist
+      expect(await storage.get(id)).toBeNull();
     });
 
-    it("should delete item from storage", async () => {
-      await storage.deactivate(storageId);
-
-      const entity = await storage.get(storageId);
-      expect(entity).toBeNull();
-    });
-  });
-
-  describe("clear", () => {
-    const storage = getStorage(container);
-    beforeAll(async () => {
-      await storage.start();
-    });
-    afterAll(async () => {
-      await storage.stop();
-    });
-
-    it("should clear storage successfully", async () => {
-      await storage.clear();
+    it("should return do notthing with falsy id", async () => {
+      expect(await storage.deactivate("")).toBeUndefined();
     });
   });
 });
-
-function getStorage(container: Container): IStorage {
-  bindRedis(container, {
-    uri: process.env.TEST_XPROVIDER_REDIS_URI || "redis://127.0.0.1:6379/0",
-    prefix: "provider_test",
-  });
-  if (!container.isBound("XPROVIDER.SETTINGS")) {
-    container
-      .bind<IXProviderSettings>("XPROVIDER.SETTINGS")
-      .toConstantValue(settings);
-  }
-  if (!container.isBound("XPROVIDER.QUOTA_MANAGER")) {
-    container
-      .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
-      .to(RedisQuotaManager);
-  }
-  if (!container.isBound("XPROVIDER.ROTATION")) {
-    container.bind<IRotation>("XPROVIDER.ROTATION").to(RedisRotation);
-  }
-
-  return container.resolve<IStorage>(RedisStorage);
-}
-
-function bindRedis(
-  container: Container,
-  redis: { uri: string; prefix: string; clientOpts?: RedisOptions }
-) {
-  if (container.isBound("CONNECTIONS.REDIS")) {
-    container
-      .rebind<{ uri: string; prefix: string }>("CONNECTIONS.REDIS")
-      .toConstantValue(redis);
-    return;
-  }
-
-  container
-    .bind<{ uri: string; prefix: string }>("CONNECTIONS.REDIS")
-    .toConstantValue(redis);
-}

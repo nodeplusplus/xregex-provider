@@ -3,72 +3,56 @@ import { injectable, inject } from "inversify";
 import {
   MongoClient,
   Db as MongoClientDB,
+  Collection as MongoCollection,
   MongoClientOptions,
-  Collection,
 } from "mongodb";
 import { ILogger } from "@nodeplusplus/xregex-logger";
+import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IDatasource,
-  IDatasourceOpts,
+  IXProviderDatasource,
+  IXProviderDatasourceOptions,
   IXProviderEntity,
 } from "../types";
-import helpers from "../helpers";
 
 @injectable()
-export class MongoDBDatasource implements IDatasource {
+export class MongoDBDatasource implements IXProviderDatasource {
   @inject("LOGGER") private logger!: ILogger;
+
+  @inject("CONNECTIONS.MONGODB") private connection!: Connection<
+    MongoClientOptions
+  >;
+  @inject("XPROVIDER.DATASOURCE.OPTIONS")
+  private options!: IXProviderDatasourceOptions;
 
   private client!: MongoClient;
   private db!: MongoClientDB;
-  private collection!: Collection;
-
-  protected id!: string;
-  protected options!: {
-    connection: Required<Connection<MongoClientOptions>>;
-  };
-
-  public init(options: IDatasourceOpts) {
-    this.id = options.id;
-    this.options = options.opts as any;
-  }
+  private collection!: MongoCollection;
 
   public async start() {
-    try {
-      const { connection: conn } = this.options;
-      if (!this.client) {
-        this.client = await MongoClient.connect(conn.uri, conn.clientOpts);
-      }
-
-      this.db = this.client.db(conn.database);
-      this.collection = this.db.collection(conn.collection);
-    } catch {
-      throw new Error("XPROVIDER:DATASOURCES.MONGODB.CONNECTED_FAILED");
+    if (!this.client) {
+      const props = await helpers.mongodb.connect(this.connection);
+      this.client = props.client;
+      this.db = props.db;
+      this.collection = this.db.collection(this.options.collection);
     }
 
-    this.logger.info("XPROVIDER:DATASOURCES.MONGODB.STARTED");
+    this.logger.info("XPROVIDER:DATASOURCE.MONGODB.STARTED");
   }
 
   public async stop() {
-    if (this.client) await this.client.close(true);
+    if (this.client) await helpers.mongodb.disconnect(this.client);
 
-    this.logger.info("XPROVIDER:DATASOURCES.MONGODB.STOPPED");
+    this.logger.info("XPROVIDER:DATASOURCE.MONGODB.STOPPED");
   }
 
   public async feed() {
-    return this.collection
-      .find({
-        $or: [
-          { deactivatedAt: { $exists: false } },
-          { deactivatedAt: { $gt: new Date() } },
-        ],
-      })
-      .toArray();
+    return this.collection.find({ $or: this.options.conditions }).toArray();
   }
 
   public async deactivate(entity: IXProviderEntity) {
-    const filters = helpers.mongodb.generateIdFilter(entity.id);
+    const filters = helpers.mongodb.generateIdsFilter(entity.id);
     if (!filters) return;
 
     const operator = { $set: { deactivatedAt: new Date() } };

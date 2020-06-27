@@ -3,79 +3,60 @@ import { Redis, RedisOptions } from "ioredis";
 import Redlock from "redlock";
 import { injectable, inject } from "inversify";
 import { ILogger } from "@nodeplusplus/xregex-logger";
+import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IXProviderSettings,
-  IStorage,
-  IStorageLookupOpts,
-  IQuotaManager,
-  IRotation,
-  IStorageOpts,
   IXProviderEntity,
+  IXProviderStorage,
+  IXProviderQuotaManager,
+  IXProviderRotation,
+  IXProviderStorageOptions,
+  IXProviderOptions,
 } from "../types";
-import helpers from "../helpers";
 
 @injectable()
-export class RedisStorage implements IStorage {
-  private static KEYS_DELIMITER = "/";
-
+export class RedisStorage implements IXProviderStorage {
   @inject("LOGGER") private logger!: ILogger;
+  @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
+  @inject("XPROVIDER.STORAGE.OPTIONS")
+  private options!: IXProviderStorageOptions;
   @inject("XPROVIDER.QUOTA_MANAGER")
-  private quotaManager!: IQuotaManager;
-
+  private quotaManager!: IXProviderQuotaManager;
   @inject("XPROVIDER.ROTATION")
-  private rotation!: IRotation;
+  private rotation!: IXProviderRotation;
 
-  private connection: { uri: string; opts: RedisOptions };
-  private settings: IStorageOpts;
   private redis!: Redis;
   private redlock!: Redlock;
 
-  constructor(
-    @inject("CONNECTIONS.REDIS") redis: Connection<RedisOptions>,
-    @inject("XPROVIDER.SETTINGS")
-    settings: IXProviderSettings
-  ) {
-    const connOpts = {
-      ...redis.clientOpts,
-      keyPrefix: helpers.redis.generateKey(
-        [redis.database, "xprovider", "storage"],
-        RedisStorage.KEYS_DELIMITER,
-        true
-      ),
-    };
-    this.connection = { uri: redis.uri, opts: connOpts };
-    this.settings = { ...settings.storage };
-  }
-
   public async start() {
+    await Promise.all([this.quotaManager.start(), this.rotation.start()]);
+
     if (!this.redis) {
-      this.redis = await helpers.redis.connect(
-        this.connection.uri,
-        this.connection.opts
-      );
+      const scopes = ["xprovider", "storage"];
+      this.redis = await helpers.redis.connect(this.connection, scopes);
     }
     if (!this.redlock) this.redlock = new Redlock([this.redis]);
-    await Promise.all([this.rotation.start(), this.quotaManager.start()]);
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STARTED");
   }
 
   public async stop() {
+    await Promise.all([this.quotaManager.stop(), this.rotation.stop()]);
+
     if (this.redlock) await this.redlock.quit();
-    await helpers.redis.disconnect(this.redis);
-    await Promise.all([this.rotation.stop(), this.quotaManager.stop()]);
+    if (this.redis) await helpers.redis.disconnect(this.redis);
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STOPPED");
   }
 
   public serialize(data?: any): string {
-    return JSON.stringify(data || null);
+    if (typeof data === "undefined") data = null;
+    return JSON.stringify(data);
   }
 
-  public deserialize<T>(data?: string | null): T | null {
+  public deserialize<T>(data?: string): T | null {
     try {
       return data ? JSON.parse(data) : null;
     } catch {
@@ -86,9 +67,9 @@ export class RedisStorage implements IStorage {
   public async load(
     entities: IXProviderEntity[]
   ): Promise<{ [name: string]: boolean }> {
-    const bagName = this.settings.name;
+    const bagName = this.options.name;
 
-    const statuses = await Promise.all(
+    const status = await Promise.all(
       entities.map(({ id, tags, value }) => {
         const serialized = this.serialize({ id, tags, value });
         const storageId = helpers.redis.generateKey([...tags.sort(), id]);
@@ -97,22 +78,26 @@ export class RedisStorage implements IStorage {
       })
     );
 
-    return Object.assign({}, ...statuses);
+    return Object.assign({}, ...status);
   }
 
   public async lookup<Entity>(
-    opts: IStorageLookupOpts
+    options: IXProviderOptions
   ): Promise<[Entity?, string?]> {
-    const key = helpers.redis.generateKey(opts.tags.sort());
-    const scopeKey = helpers.redis.generateKey(
-      opts.scopes && Array.isArray(opts.scopes) ? opts.scopes : []
-    );
-    const bagName = this.settings.name;
-    const retry = Number.isFinite(Number(opts.retry)) ? Number(opts.retry) : 1;
+    const bagName = this.options.name;
 
-    const quotaSetting = this.quotaManager.getQuota(key);
-    // Unit: milliseconds
-    const lockedTTL = quotaSetting.duration * 2000;
+    const key = helpers.redis.generateKey(options.tags.sort());
+    const scopeKey = helpers.redis.generateKey(
+      options.scopes && Array.isArray(options.scopes) ? options.scopes : []
+    );
+    const retry = Number.isFinite(Number(options.retry))
+      ? Number(options.retry)
+      : 1;
+
+    const quotaOptions = this.quotaManager.getQuota(key);
+    // Because quota duration is seconds so we have to multiplicate with 1000
+    // *2*1000 (*1000 to convert to milliseconds);
+    const lockedTTL = quotaOptions.duration * 2000;
 
     let id;
     let value;
@@ -181,9 +166,9 @@ export class RedisStorage implements IStorage {
     // Retry
     if (typeof id === "undefined" && retry > 0) {
       await this.rotation.clear(scopeKey);
-      const nextOpts = { ...opts, retry: retry - 1 };
-      this.logger.warn("XPROVIDER:STORAGE.REDIS.RETRY", nextOpts);
-      return this.lookup(nextOpts);
+      const nextOptions = { ...options, retry: retry - 1 };
+      this.logger.warn("XPROVIDER:STORAGE.REDIS.RETRY", nextOptions);
+      return this.lookup(nextOptions);
     }
 
     this.logger.debug("XPROVIDER:STORAGE.REDIS.PICKED", { id });
@@ -199,15 +184,17 @@ export class RedisStorage implements IStorage {
   public async get(id: string) {
     if (!id) return null;
 
-    const bagName = this.settings.name;
+    const bagName = this.options.name;
     const entity = await this.redis.hget(bagName, id);
+    if (!entity) return null;
+
     return this.deserialize<IXProviderEntity>(entity);
   }
 
   public async deactivate(id: string) {
     if (!id) return;
 
-    const bagName = this.settings.name;
+    const bagName = this.options.name;
     await this.redis.hdel(bagName, id);
   }
 }

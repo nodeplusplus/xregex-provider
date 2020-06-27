@@ -1,62 +1,42 @@
 import { Redis, RedisOptions } from "ioredis";
 import { injectable, inject } from "inversify";
 import { ILogger } from "@nodeplusplus/xregex-logger";
+import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IQuotaManager,
-  IXProviderSettings,
-  IQuota,
-  IQuotaManagerOpts,
+  IXProviderQuotaManager,
+  IXProviderQuotaManagerOptions,
+  IXProviderQuota,
 } from "../types";
-import helpers from "../helpers";
 
 @injectable()
-export class RedisQuotaManager implements IQuotaManager {
-  private static KEYS_DELIMITER = "/";
-  private static DEFAULT_QUOTA: IQuota = { point: 1, duration: 60 };
-
+export class RedisQuotaManager implements IXProviderQuotaManager {
   @inject("LOGGER") private logger!: ILogger;
+  @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
-  private connection: { uri: string; opts: RedisOptions };
-  private settings: IQuotaManagerOpts;
+  @inject("XPROVIDER.QUOTA_MANAGER.OPTIONS")
+  private options!: IXProviderQuotaManagerOptions;
+
   private redis!: Redis;
-
-  constructor(
-    @inject("CONNECTIONS.REDIS") redis: Connection<RedisOptions>,
-    @inject("XPROVIDER.SETTINGS") settings: IXProviderSettings
-  ) {
-    const connOpts = {
-      ...redis.clientOpts,
-      keyPrefix: helpers.redis.generateKey(
-        [redis.database, "xprovider", "quota"],
-        RedisQuotaManager.KEYS_DELIMITER,
-        true
-      ),
-    };
-    this.connection = { uri: redis.uri, opts: connOpts };
-    this.settings = { quotas: {}, ...settings.quotaManager };
-  }
 
   public async start() {
     if (!this.redis) {
-      this.redis = await helpers.redis.connect(
-        this.connection.uri,
-        this.connection.opts
-      );
+      const scopes = ["xprovider", "quota"];
+      this.redis = await helpers.redis.connect(this.connection, scopes);
     }
 
-    this.logger.info("XPROVIDER:QUOTA.REDIS.STARTED");
+    this.logger.info("XPROVIDER:QUOTA_MANAGER.REDIS.STARTED");
   }
 
   public async stop() {
-    await helpers.redis.disconnect(this.redis);
+    if (this.redis) await helpers.redis.disconnect(this.redis);
 
-    this.logger.info("XPROVIDER:QUOTA.REDIS.STOPPED");
+    this.logger.info("XPROVIDER:QUOTA_MANAGER.REDIS.STOPPED");
   }
 
   public async charge(id: string, point?: number) {
-    const settings = this.getQuota(id);
+    const quota = this.getQuota(id);
     point = Number(point) || 1;
 
     // doc at https://redis.io/commands/ttl
@@ -64,43 +44,44 @@ export class RedisQuotaManager implements IQuotaManager {
     const currentPoint = Number(await this.redis.get(id)) || 0;
 
     const newPoint = currentPoint + point;
-    const newTTL = Math.max(currentTTL, settings.duration);
+    const newTTL = Math.max(currentTTL, quota.duration);
     await this.redis.set(id, newPoint, "EX", newTTL);
 
     return newPoint;
   }
 
   public async refund(id: string, point?: number) {
-    const settings = this.getQuota(id);
+    const quota = this.getQuota(id);
     point = Number(point) || 1;
 
     const currentTTL = await this.redis.ttl(id);
-    const currentPoint = Number(await this.redis.get(id)) || 0;
+    const currentPoint = Number(await this.redis.get(id));
 
     const newPoint = Math.max(currentPoint - point, 0);
-    const newTTL = Math.max(currentTTL, settings.duration);
+    const newTTL = Math.max(currentTTL, quota.duration);
     await this.redis.set(id, newPoint, "EX", newTTL);
 
-    return Math.max(settings.point - newPoint, 0);
+    return newPoint;
   }
 
   public async reached(id: string) {
-    const settings = this.getQuota(id);
+    const quota = this.getQuota(id);
 
     const currentPoint = await this.get(id);
-    return currentPoint >= settings.point;
+    return currentPoint >= quota.point;
   }
 
   public async get(id: string) {
     return Number(await this.redis.get(id)) || 0;
   }
 
-  public getQuota(key: string): IQuota {
-    const quotas = this.settings.quotas;
-    const quotaKey = Object.keys({ ...quotas }).find((k) =>
+  public getQuota(key: string): IXProviderQuota {
+    const ratemLimits = this.options.ratemLimits;
+    const quotaKey = Object.keys({ ...ratemLimits }).find((k) =>
       new RegExp(k).test(key)
     );
-    return (quotaKey && quotas[quotaKey]) || RedisQuotaManager.DEFAULT_QUOTA;
+    if (quotaKey && ratemLimits[quotaKey]) return ratemLimits[quotaKey];
+    return { point: 1, duration: 60 };
   }
 
   public async clear() {

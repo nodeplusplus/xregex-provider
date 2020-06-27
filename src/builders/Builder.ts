@@ -1,17 +1,19 @@
 import { Container, interfaces } from "inversify";
+import _ from "lodash";
+import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
-  IDatasource,
-  IDatasourceOpts,
-  IXProvider,
   IBuilder,
-  IStorage,
-  IQuotaManager,
-  IRotation,
-  IXProviderSettings,
+  IXProviderDatasource,
+  IXProviderDatasourceOptions,
+  IXProviderStorage,
+  IXProviderStorageOptions,
+  IXProviderQuotaManager,
+  IXProviderQuotaManagerOptions,
+  IXProviderRotation,
+  IXProviderRotationOptions,
+  IXProvider,
 } from "../types";
-import * as datasources from "../datasources";
-import { ILogger } from "@nodeplusplus/xregex-logger";
 
 export class Builder implements IBuilder {
   private container!: Container;
@@ -20,91 +22,90 @@ export class Builder implements IBuilder {
     this.container = new Container({ defaultScope: "Singleton" });
   }
 
-  public registerFactory() {
-    this.container
-      .bind<interfaces.Factory<IDatasource>>("FACTORY<XPROVIDER.DATASOURCES>")
-      .toFactory<IDatasource>(this.createDatasource);
-  }
-
   public registerConnections(connections: { [name: string]: any }) {
     const names = Object.keys(connections);
     names.forEach((name) =>
       this.container
-        .bind(`CONNECTIONS.${name.toUpperCase()}`)
+        .bind(`CONNECTIONS.${_.toUpper(name)}`)
         .toConstantValue(connections[name])
     );
   }
 
-  public registerDatasources() {
-    const Datasources = Object.values(datasources);
+  public setLogger(logger: ILogger) {
+    this.container.bind<ILogger>("LOGGER").toConstantValue(logger);
+  }
 
-    for (let Datasource of Datasources) {
-      this.container
-        .bind<IDatasource>("XPROVIDER.DATASOURCES")
-        .to(Datasource)
-        .whenTargetNamed(Datasource.name);
-    }
+  public setDatasource(
+    Datasource: interfaces.Newable<IXProviderDatasource>,
+    options: IXProviderDatasourceOptions
+  ) {
+    this.container
+      .bind<IXProviderDatasourceOptions>("XPROVIDER.DATASOURCE.OPTIONS")
+      .toConstantValue(options);
+    this.container
+      .bind<IXProviderDatasource>("XPROVIDER.DATASOURCE")
+      .to(Datasource);
+  }
+
+  public setStorage(
+    Storage: interfaces.Newable<IXProviderStorage>,
+    options: IXProviderStorageOptions
+  ) {
+    this.container
+      .bind<IXProviderStorageOptions>("XPROVIDER.STORAGE.OPTIONS")
+      .toConstantValue(options);
+    this.container.bind<IXProviderStorage>("XPROVIDER.STORAGE").to(Storage);
+  }
+
+  public setQuotaManager(
+    QuotaManager: interfaces.Newable<IXProviderQuotaManager>,
+    options: IXProviderQuotaManagerOptions
+  ) {
+    this.container
+      .bind<IXProviderQuotaManagerOptions>("XPROVIDER.QUOTA_MANAGER.OPTIONS")
+      .toConstantValue(options);
+    this.container
+      .bind<IXProviderQuotaManager>("XPROVIDER.QUOTA_MANAGER")
+      .to(QuotaManager);
+  }
+
+  public setRotation(
+    Rotation: interfaces.Newable<IXProviderRotation>,
+    options: IXProviderRotationOptions
+  ) {
+    this.container
+      .bind<IXProviderRotationOptions>("XPROVIDER.ROTATION.OPTIONS")
+      .toConstantValue(options);
+    this.container.bind<IXProviderRotation>("XPROVIDER.ROTATION").to(Rotation);
   }
 
   public setProvider(Provider: interfaces.Newable<IXProvider>) {
     this.container.bind<IXProvider>("XPROVIDER").to(Provider);
   }
-  public setLogger(logger: ILogger) {
-    if (this.container.isBound("LOGGER")) {
-      this.container.rebind<ILogger>("LOGGER").toConstantValue(logger);
-      return;
-    }
-
-    this.container.bind<ILogger>("LOGGER").toConstantValue(logger);
-  }
-  public setSettings(settings: IXProviderSettings) {
-    if (this.container.isBound("XPROVIDER.SETTINGS")) {
-      this.container
-        .rebind<IXProviderSettings>("XPROVIDER.SETTINGS")
-        .toConstantValue(settings);
-      return;
-    }
-
-    this.container
-      .bind<IXProviderSettings>("XPROVIDER.SETTINGS")
-      .toConstantValue(settings);
-  }
-  public setStorage(Storage: interfaces.Newable<IStorage>) {
-    this.container.bind<IStorage>("XPROVIDER.STORAGE").to(Storage);
-  }
-  public setQuotaManager(QuotaManager: interfaces.Newable<IQuotaManager>) {
-    this.container
-      .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
-      .to(QuotaManager);
-  }
-  public setRotation(Rotation: interfaces.Newable<IRotation>) {
-    this.container.bind<IRotation>("XPROVIDER.ROTATION").to(Rotation);
-  }
 
   public getContainer() {
     return this.container;
   }
+
   public getProvider() {
     return this.container.get<IXProvider>("XPROVIDER");
   }
-  public getQuotaManager() {
-    return this.container.get<IQuotaManager>("XPROVIDER.QUOTA_MANAGER");
-  }
-  public getRotation() {
-    return this.container.get<IRotation>("XPROVIDER.ROTATION");
-  }
-  public getStorage() {
-    return this.container.get<IStorage>("XPROVIDER.STORAGE");
+
+  public getDatasource() {
+    return this.container.get<IXProviderDatasource>("XPROVIDER.DATASOURCE");
   }
 
-  private createDatasource(context: interfaces.Context) {
-    return function createDatasourceWithOpts(options: IDatasourceOpts) {
-      const datasource = context.container.getNamed<IDatasource>(
-        "XPROVIDER.DATASOURCES",
-        options.type
-      );
-      datasource.init(options);
-      return datasource;
-    };
+  public getStorage() {
+    return this.container.get<IXProviderStorage>("XPROVIDER.STORAGE");
+  }
+
+  public getQuotaManager() {
+    return this.container.get<IXProviderQuotaManager>(
+      "XPROVIDER.QUOTA_MANAGER"
+    );
+  }
+
+  public getRotation() {
+    return this.container.get<IXProviderRotation>("XPROVIDER.ROTATION");
   }
 }
