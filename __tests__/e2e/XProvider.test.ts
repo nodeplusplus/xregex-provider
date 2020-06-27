@@ -35,6 +35,7 @@ describe("XProvider", () => {
     const scopes = [faker.internet.domainName()];
     beforeAll(async () => {
       await redis.flushall();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await xprovider.start();
     });
     afterAll(async () => {
@@ -75,6 +76,7 @@ describe("XProvider", () => {
 
     beforeAll(async () => {
       await redis.flushall();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await xprovider.start();
     });
     afterAll(async () => {
