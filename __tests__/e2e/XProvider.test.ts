@@ -1,17 +1,29 @@
 import { Redis } from "ioredis";
+import { MongoClient } from "mongodb";
 import helpers from "@nodeplusplus/xregex-helpers";
 import faker from "faker";
 
 import { Builder, Director } from "../../src";
 const template = require("../../mocks/template");
+const resources = require("../../mocks/resources");
 
 describe("XProvider", () => {
   let redis: Redis;
+  let mongo: MongoClient;
   beforeAll(async () => {
     redis = await helpers.redis.connect(template.connections.redis);
+
+    const props = await helpers.mongodb.connect(template.connections.mongodb);
+    mongo = props.client;
+    const collection = props.db.collection(
+      template.XProvider.datasource.options.collection
+    );
+    await collection.deleteMany({});
+    await collection.insertMany(resources);
   });
   afterAll(async () => {
     await helpers.redis.disconnect(redis);
+    await helpers.mongodb.disconnect(mongo);
   });
 
   describe("start/stop", () => {
@@ -35,7 +47,6 @@ describe("XProvider", () => {
     const scopes = [faker.internet.domainName()];
     beforeAll(async () => {
       await redis.flushall();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       await xprovider.start();
     });
     afterAll(async () => {
@@ -76,7 +87,6 @@ describe("XProvider", () => {
 
     beforeAll(async () => {
       await redis.flushall();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       await xprovider.start();
     });
     afterAll(async () => {
