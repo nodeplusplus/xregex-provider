@@ -1,6 +1,6 @@
 {
   "name": "@nodeplusplus/xregex-provider",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Provide your resource with quota",
   "main": "lib/index.js",
   "scripts": {
@@ -16,13 +16,17 @@
     "lint:fix": "npm run lint --fix",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git@github.com:nodeplusplus/xregex-provider.git"
   },
-  "keywords": ["etl"],
+  "keywords": [
+    "etl"
+  ],
   "author": "Tuan Nguyen <tuan.nguyen@nodeplusplus.com>",
   "license": "MIT",
   "devDependencies": {
