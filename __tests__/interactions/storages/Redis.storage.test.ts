@@ -36,16 +36,12 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should return serialized data if it is defined", () => {
+    it("should return serialized data successfully", () => {
       expect(storage.serialize(false)).toBe(JSON.stringify(false));
       expect(storage.serialize(null)).toBe(JSON.stringify(null));
 
       const data = { id: faker.random.uuid() };
       expect(storage.serialize(data)).toBe(JSON.stringify(data));
-    });
-
-    it("should return stringify of null if data is undefined", () => {
-      expect(storage.serialize()).toBe(JSON.stringify(null));
     });
   });
 
@@ -66,16 +62,6 @@ describe("Redis.storage", () => {
       const data = { id: faker.random.uuid() };
 
       expect(storage.deserialize(storage.serialize(data))).toEqual(data);
-    });
-
-    it("should return null if data was not truthy value", () => {
-      expect(storage.deserialize()).toBeNull();
-      expect(storage.deserialize(null as any)).toBeNull();
-      expect(storage.deserialize("")).toBeNull();
-    });
-
-    it("should return null if parse was failed", () => {
-      expect(storage.deserialize("{]}")).toBeNull();
     });
   });
 

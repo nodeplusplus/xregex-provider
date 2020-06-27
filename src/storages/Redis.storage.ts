@@ -52,16 +52,11 @@ export class RedisStorage implements IXProviderStorage {
   }
 
   public serialize(data?: any): string {
-    if (typeof data === "undefined") data = null;
-    return JSON.stringify(data);
+    return helpers.serializer.serialize(data);
   }
 
   public deserialize<T>(data?: string): T | null {
-    try {
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
+    return helpers.serializer.deserialize(data);
   }
 
   public async load(
