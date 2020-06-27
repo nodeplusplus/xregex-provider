@@ -11,21 +11,18 @@
     "test:coverage:ci": "jest --runInBand --forceExit --reporters=default --reporters=jest-junit --coverage -ci __tests__",
     "build": "rm -rf lib && tsc -p tsconfig.build.json",
     "prepack": "rm -rf *.tgz && npm run build",
+    "validate": "tsc -p tsconfig.build.json --noEmit",
     "lint": "tslint -p tsconfig.build.json",
     "lint:fix": "npm run lint --fix",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
-  "files": [
-    "lib"
-  ],
+  "files": ["lib"],
   "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git@github.com:nodeplusplus/xregex-provider.git"
   },
-  "keywords": [
-    "etl"
-  ],
+  "keywords": ["etl"],
   "author": "Tuan Nguyen <tuan.nguyen@nodeplusplus.com>",
   "license": "MIT",
   "devDependencies": {

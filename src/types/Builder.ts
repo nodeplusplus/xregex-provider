@@ -7,7 +7,7 @@ import {
   IXProviderDatasource,
   IXProviderDatasourceOptions,
 } from "./Datasource";
-import { IXProviderStorage, IXProviderStorageOptions } from "./storages";
+import { IXProviderStorage, IXProviderStorageOptions } from "./Storage";
 import {
   IXProviderQuotaManager,
   IXProviderQuotaManagerOptions,

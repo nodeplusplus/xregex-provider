@@ -3,7 +3,7 @@ import { LoggerType, ILoggerCreatorOpts } from "@nodeplusplus/xregex-logger";
 import { Connection } from "./Common";
 import { IXProviderDatasourceOptions } from "./Datasource";
 import { IXProviderQuotaManagerOptions } from "./QuotaManager";
-import { IXProviderStorageOptions } from "./Storages";
+import { IXProviderStorageOptions } from "./Storage";
 import { IXProviderRotationOptions } from "./Rotation";
 
 export interface IXProviderTemplate {
