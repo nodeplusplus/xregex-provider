@@ -53,8 +53,6 @@ describe("Redis.storage", () => {
     const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
     const storage = builder.getStorage();
-    const quotaManager = builder.getQuotaManager();
-    const rotation = builder.getRotation();
 
     beforeAll(async () => {
       await storage.start();
@@ -85,8 +83,6 @@ describe("Redis.storage", () => {
     const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
     const storage = builder.getStorage();
-    const quotaManager = builder.getQuotaManager();
-    const rotation = builder.getRotation();
 
     beforeAll(async () => {
       await storage.start();
@@ -110,8 +106,6 @@ describe("Redis.storage", () => {
     const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
     const storage = builder.getStorage();
-    const quotaManager = builder.getQuotaManager();
-    const rotation = builder.getRotation();
 
     // enrich total entities
     const entities = new Array(faker.random.number({ min: 100, max: 300 }))
@@ -202,8 +196,6 @@ describe("Redis.storage", () => {
     const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
     const storage = builder.getStorage();
-    const quotaManager = builder.getQuotaManager();
-    const rotation = builder.getRotation();
 
     const id = faker.random.uuid();
 
@@ -243,8 +235,6 @@ describe("Redis.storage", () => {
     const builder = new Builder();
     new Director().constructProviderFromTemplate(builder, template);
     const storage = builder.getStorage();
-    const quotaManager = builder.getQuotaManager();
-    const rotation = builder.getRotation();
 
     const id = faker.random.uuid();
 
