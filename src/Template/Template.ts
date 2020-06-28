@@ -1,15 +1,20 @@
 import _ from "lodash";
 
-import { IXProviderTemplate } from "../types";
+import {
+  ITemplateValidator,
+  ITemplateValidatorError,
+  IXProviderTemplate,
+} from "../types";
 import { xprovider as validator } from "./validators";
 
-export class XProviderTemplate implements ITemplateValidator {
-  private validator?: ITemplateValidator;
-  constructor(validator?: ITemplateValidator) {
+export class XProviderTemplate<T extends IXProviderTemplate>
+  implements ITemplateValidator<T> {
+  private validator?: ITemplateValidator<any>;
+  constructor(validator?: ITemplateValidator<any>) {
     this.validator = validator;
   }
 
-  validate(template: IXProviderTemplate) {
+  public validate(template: T) {
     const prevErrors = this.validator ? this.validator.validate(template) : [];
 
     const { error } = validator.validate(template, { abortEarly: false });
@@ -17,16 +22,10 @@ export class XProviderTemplate implements ITemplateValidator {
       ? error.details.map((e) => _.pick(e, ["type", "path", "message"]))
       : [];
 
-    return [...prevErrors, ...errors] as Array<ITemplateValidatorError>;
+    return [...prevErrors, ...errors] as ITemplateValidatorError[];
   }
-}
 
-export interface ITemplateValidator {
-  validate(template: any): Array<ITemplateValidatorError>;
-}
-
-export interface ITemplateValidatorError {
-  type: string;
-  path: string;
-  message: string;
+  public getComponents(template: T) {
+    return {};
+  }
 }

@@ -1,6 +1,6 @@
 import { LoggerType, ILoggerCreatorOpts } from "@nodeplusplus/xregex-logger";
 
-import { Connection } from "./Common";
+import { Connection, GenericObject } from "./Common";
 import { IXProviderDatasourceOptions } from "./Datasource";
 import { IXProviderQuotaManagerOptions } from "./QuotaManager";
 import { IXProviderStorageOptions } from "./Storage";
@@ -16,4 +16,15 @@ export interface IXProviderTemplate {
     rotation: { type: string; options: IXProviderRotationOptions };
   };
   [name: string]: any;
+}
+
+export interface ITemplateValidator<T> {
+  validate(template: T): Array<ITemplateValidatorError>;
+  getComponents(template: T): GenericObject;
+}
+
+export interface ITemplateValidatorError {
+  type: string;
+  path: string[];
+  message: string;
 }
