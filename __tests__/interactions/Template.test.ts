@@ -8,7 +8,9 @@ const template = require("../../mocks/template");
 describe("Template", () => {
   describe("validate", () => {
     it("should return empty array if template have no errors", () => {
-      const errorTemplate = _.merge({}, template, { datasource: null });
+      const errorTemplate = _.merge({}, template, {
+        XProvider: { datasource: null },
+      });
       const errors = new XProviderTemplate<any>().validate(errorTemplate);
       expect(errors.length).toBeTruthy();
     });
