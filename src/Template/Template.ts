@@ -26,6 +26,9 @@ export class XProviderTemplate<T extends IXProviderTemplate>
   }
 
   public getComponents(template: T) {
-    return {};
+    const prevComponents = this.validator
+      ? this.validator.getComponents(template)
+      : {};
+    return { ...prevComponents };
   }
 }

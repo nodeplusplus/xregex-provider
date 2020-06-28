@@ -29,7 +29,15 @@ describe("Template", () => {
   });
 
   describe("getComponents", () => {
-    it("should return empty object because provider have no components to expose", () => {
+    it("should return previous components if previous validator was set", () => {
+      const components = new XProviderTemplate<any>(
+        new TestValidator()
+      ).getComponents(template);
+
+      expect(components).toEqual(new TestValidator().getComponents(template));
+    });
+
+    it("should return empty object for other case because our provider is not exposed any components", () => {
       expect(new XProviderTemplate<any>().getComponents(template)).toEqual({});
     });
   });
@@ -40,6 +48,6 @@ class TestValidator<T = any> implements ITemplateValidator<T> {
     return [];
   }
   public getComponents(template: T) {
-    return {};
+    return { test: true };
   }
 }
