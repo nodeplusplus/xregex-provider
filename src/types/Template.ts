@@ -15,4 +15,5 @@ export interface IXProviderTemplate {
     quotaManager: { type: string; options: IXProviderQuotaManagerOptions };
     rotation: { type: string; options: IXProviderRotationOptions };
   };
+  [name: string]: any;
 }

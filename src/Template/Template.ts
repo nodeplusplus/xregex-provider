@@ -1,22 +1,32 @@
 import _ from "lodash";
 
 import { IXProviderTemplate } from "../types";
-import * as validators from "./validators";
+import { xprovider as validator } from "./validators";
 
-export class XProviderTemplate {
-  protected template: IXProviderTemplate;
-
-  constructor(template: IXProviderTemplate) {
-    this.template = template as any;
+export class XProviderTemplate implements ITemplateValidator {
+  private validator?: ITemplateValidator;
+  constructor(validator?: ITemplateValidator) {
+    this.validator = validator;
   }
 
-  validate() {
-    const { error } = validators.xprovider.validate(this.template, {
-      abortEarly: false,
-    });
-    if (!error) return [];
-    return error.details.map((error) =>
-      _.pick(error, ["type", "path", "message"])
-    );
+  validate(template: IXProviderTemplate) {
+    const prevErrors = this.validator ? this.validator.validate(template) : [];
+
+    const { error } = validator.validate(template, { abortEarly: false });
+    const errors = error
+      ? error.details.map((e) => _.pick(e, ["type", "path", "message"]))
+      : [];
+
+    return [...prevErrors, ...errors] as Array<ITemplateValidatorError>;
   }
+}
+
+export interface ITemplateValidator {
+  validate(template: any): Array<ITemplateValidatorError>;
+}
+
+export interface ITemplateValidatorError {
+  type: string;
+  path: string;
+  message: string;
 }

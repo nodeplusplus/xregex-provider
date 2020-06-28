@@ -67,5 +67,7 @@ export const xprovider = Joi.object({
         expiresIn: Joi.number().integer().greater(0),
       }),
     }).required(),
-  }).required(),
+  })
+    .required()
+    .unknown(true),
 });
