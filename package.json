@@ -1,6 +1,6 @@
 {
   "name": "@nodeplusplus/xregex-provider",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Provide your resource with quota",
   "main": "lib/index.js",
   "scripts": {
