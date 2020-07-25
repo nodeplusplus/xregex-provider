@@ -6,6 +6,13 @@ import { XProviderTemplate } from "../../src/Template";
 const template = require("../../mocks/template");
 
 describe("Template", () => {
+  it("should return all ids of nested validator", () => {
+    expect(new XProviderTemplate(new TestValidator()).ids).toEqual([
+      TestValidator.name,
+      XProviderTemplate.name,
+    ]);
+  });
+
   describe("validate", () => {
     it("should return empty array if template have no errors", () => {
       const errorTemplate = _.merge({}, template, {

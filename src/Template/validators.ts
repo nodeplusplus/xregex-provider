@@ -29,28 +29,34 @@ export const xprovider = Joi.object({
     type: Joi.string()
 
       .required()
-      .allow(Object.values(LoggerType)),
+      .valid(...Object.values(LoggerType)),
     options: Joi.object({
-      level: Joi.string().allow(Object.values(LoggerLevel)),
+      level: Joi.string().valid(...Object.values(LoggerLevel)),
       name: Joi.string(),
     }),
   }).required(),
   XProvider: Joi.object({
     datasource: Joi.object({
-      type: Joi.string().allow(datasourceTypes).required(),
+      type: Joi.string()
+        .valid(...datasourceTypes)
+        .required(),
       options: Joi.object({
         collection: Joi.string().required(),
         conditions: Joi.array().items(Joi.string(), Joi.object().unknown(true)),
       }),
     }).required(),
     storage: Joi.object({
-      type: Joi.string().allow(storageTypes).required(),
+      type: Joi.string()
+        .valid(...storageTypes)
+        .required(),
       options: Joi.object({
         name: Joi.string().required(),
       }),
     }).required(),
     quotaManager: Joi.object({
-      type: Joi.string().allow(quotaManagerTypes).required(),
+      type: Joi.string()
+        .valid(...quotaManagerTypes)
+        .required(),
       options: Joi.object({
         ratemLimits: Joi.object().pattern(
           /^/,
@@ -62,7 +68,9 @@ export const xprovider = Joi.object({
       }),
     }).required(),
     rotation: Joi.object({
-      type: Joi.string().allow(rotationTypes).required(),
+      type: Joi.string()
+        .valid(...rotationTypes)
+        .required(),
       options: Joi.object({
         expiresIn: Joi.number().integer().greater(0),
       }),
