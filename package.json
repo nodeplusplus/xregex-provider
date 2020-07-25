@@ -51,6 +51,7 @@
   "dependencies": {
     "@nodeplusplus/xregex-helpers": "^1.0.2",
     "@nodeplusplus/xregex-logger": "^1.0.0",
+    "@nodeplusplus/xregex-template": "^1.0.7",
     "@types/ioredis": "^4.16.7",
     "@types/joi": "^14.3.4",
     "@types/lodash": "^4.14.149",
