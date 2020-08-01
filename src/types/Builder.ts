@@ -15,7 +15,6 @@ import {
 import { IXProviderRotation, IXProviderRotationOptions } from "./Rotation";
 
 export interface IBuilder {
-  reset(): void;
   registerConnections(connections: { [name: string]: any }): void;
 
   setLogger(logger: ILogger): void;

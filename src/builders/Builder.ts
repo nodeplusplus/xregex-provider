@@ -16,22 +16,25 @@ import {
 } from "../types";
 
 export class Builder implements IBuilder {
-  private container!: Container;
+  private container: Container;
 
-  public reset() {
-    this.container = new Container({ defaultScope: "Singleton" });
+  constructor(container = new Container({ defaultScope: "Singleton" })) {
+    this.container = container;
   }
 
   public registerConnections(connections: { [name: string]: any }) {
     const names = Object.keys(connections);
-    names.forEach((name) =>
-      this.container
-        .bind(`CONNECTIONS.${_.toUpper(name)}`)
-        .toConstantValue(connections[name])
-    );
+    names.forEach((name) => {
+      const key = `CONNECTIONS.${_.toUpper(name)}`;
+      if (this.container.isBound(key)) return;
+
+      this.container.bind(key).toConstantValue(connections[name]);
+    });
   }
 
   public setLogger(logger: ILogger) {
+    if (this.container.isBound("LOGGER")) return;
+
     this.container.bind<ILogger>("LOGGER").toConstantValue(logger);
   }
 

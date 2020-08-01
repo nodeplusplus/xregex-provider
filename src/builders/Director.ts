@@ -12,7 +12,6 @@ export class Director implements IDirector {
     builder: IBuilder,
     template: IXProviderTemplate
   ) {
-    builder.reset();
     builder.registerConnections(template.connections);
     builder.setLogger(
       createLogger(template.logger.type, template.logger.options)
