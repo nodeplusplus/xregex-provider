@@ -1,18 +1,12 @@
 import { Container, interfaces } from "inversify";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 
-import { IXProviderTemplate } from "./Template";
+import { ITemplate } from "./Template";
 import { IXProvider } from "./Provider";
-import {
-  IXProviderDatasource,
-  IXProviderDatasourceOptions,
-} from "./Datasource";
-import { IXProviderStorage, IXProviderStorageOptions } from "./Storage";
-import {
-  IXProviderQuotaManager,
-  IXProviderQuotaManagerOptions,
-} from "./QuotaManager";
-import { IXProviderRotation, IXProviderRotationOptions } from "./Rotation";
+import { IDatasource, IDatasourceOptions } from "./Datasource";
+import { IStorage, IStorageOptions } from "./Storage";
+import { IQuotaManager, IQuotaManagerOptions } from "./QuotaManager";
+import { IRotation, IRotationOptions } from "./Rotation";
 
 export interface IBuilder {
   registerConnections(connections: { [name: string]: any }): void;
@@ -20,35 +14,35 @@ export interface IBuilder {
   setLogger(logger: ILogger): void;
 
   setDatasource(
-    Datasource: interfaces.Newable<IXProviderDatasource>,
-    options: IXProviderDatasourceOptions
+    Datasource: interfaces.Newable<IDatasource>,
+    options: IDatasourceOptions
   ): void;
   setStorage(
-    Storage: interfaces.Newable<IXProviderStorage>,
-    options: IXProviderStorageOptions
+    Storage: interfaces.Newable<IStorage>,
+    options: IStorageOptions
   ): void;
   setStorage(
-    Storage: interfaces.Newable<IXProviderStorage>,
-    options: IXProviderStorageOptions
+    Storage: interfaces.Newable<IStorage>,
+    options: IStorageOptions
   ): void;
   setQuotaManager(
-    QuotaManager: interfaces.Newable<IXProviderQuotaManager>,
-    options: IXProviderQuotaManagerOptions
+    QuotaManager: interfaces.Newable<IQuotaManager>,
+    options: IQuotaManagerOptions
   ): void;
   setRotation(
-    Rotation: interfaces.Newable<IXProviderRotation>,
-    options: IXProviderRotationOptions
+    Rotation: interfaces.Newable<IRotation>,
+    options: IRotationOptions
   ): void;
   setProvider(Provider: interfaces.Newable<IXProvider>): void;
 
   getContainer(): interfaces.Container;
   getProvider(): IXProvider;
-  getDatasource(): IXProviderDatasource;
-  getStorage(): IXProviderStorage;
-  getQuotaManager(): IXProviderQuotaManager;
-  getRotation(): IXProviderRotation;
+  getDatasource(): IDatasource;
+  getStorage(): IStorage;
+  getQuotaManager(): IQuotaManager;
+  getRotation(): IRotation;
 }
 
 export interface IDirector {
-  constructFromTemplate(builder: IBuilder, template: IXProviderTemplate): void;
+  constructFromTemplate(builder: IBuilder, template: ITemplate): void;
 }

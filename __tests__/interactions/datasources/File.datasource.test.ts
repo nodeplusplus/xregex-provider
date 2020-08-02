@@ -6,12 +6,12 @@ import {
   Builder,
   Director,
   IXProviderEntity,
-  IXProviderDatasourceOptions,
+  IDatasourceOptions,
 } from "../../../src";
 const template = require("../../../mocks/template");
 
 describe("File.datasources", () => {
-  const options: { type: string; options: IXProviderDatasourceOptions } = {
+  const options: { type: string; options: IDatasourceOptions } = {
     type: "FileDatasource",
     options: {
       collection: "proxy",

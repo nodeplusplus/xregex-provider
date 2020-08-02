@@ -1,4 +1,4 @@
-export interface IXProviderRotation {
+export interface IRotation {
   start(options?: any): Promise<void>;
   stop(options?: any): Promise<void>;
 
@@ -7,6 +7,6 @@ export interface IXProviderRotation {
   clear(collection?: string): Promise<void>;
 }
 
-export interface IXProviderRotationOptions {
+export interface IRotationOptions {
   expiresIn?: number;
 }

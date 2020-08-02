@@ -4,14 +4,14 @@ import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
   IBuilder,
-  IXProviderDatasource,
-  IXProviderDatasourceOptions,
-  IXProviderStorage,
-  IXProviderStorageOptions,
-  IXProviderQuotaManager,
-  IXProviderQuotaManagerOptions,
-  IXProviderRotation,
-  IXProviderRotationOptions,
+  IDatasource,
+  IDatasourceOptions,
+  IStorage,
+  IStorageOptions,
+  IQuotaManager,
+  IQuotaManagerOptions,
+  IRotation,
+  IRotationOptions,
   IXProvider,
 } from "../types";
 
@@ -39,47 +39,45 @@ export class Builder implements IBuilder {
   }
 
   public setDatasource(
-    Datasource: interfaces.Newable<IXProviderDatasource>,
-    options: IXProviderDatasourceOptions
+    Datasource: interfaces.Newable<IDatasource>,
+    options: IDatasourceOptions
   ) {
     this.container
-      .bind<IXProviderDatasourceOptions>("XPROVIDER.DATASOURCE.OPTIONS")
+      .bind<IDatasourceOptions>("XPROVIDER.DATASOURCE.OPTIONS")
       .toConstantValue(options);
-    this.container
-      .bind<IXProviderDatasource>("XPROVIDER.DATASOURCE")
-      .to(Datasource);
+    this.container.bind<IDatasource>("XPROVIDER.DATASOURCE").to(Datasource);
   }
 
   public setStorage(
-    Storage: interfaces.Newable<IXProviderStorage>,
-    options: IXProviderStorageOptions
+    Storage: interfaces.Newable<IStorage>,
+    options: IStorageOptions
   ) {
     this.container
-      .bind<IXProviderStorageOptions>("XPROVIDER.STORAGE.OPTIONS")
+      .bind<IStorageOptions>("XPROVIDER.STORAGE.OPTIONS")
       .toConstantValue(options);
-    this.container.bind<IXProviderStorage>("XPROVIDER.STORAGE").to(Storage);
+    this.container.bind<IStorage>("XPROVIDER.STORAGE").to(Storage);
   }
 
   public setQuotaManager(
-    QuotaManager: interfaces.Newable<IXProviderQuotaManager>,
-    options: IXProviderQuotaManagerOptions
+    QuotaManager: interfaces.Newable<IQuotaManager>,
+    options: IQuotaManagerOptions
   ) {
     this.container
-      .bind<IXProviderQuotaManagerOptions>("XPROVIDER.QUOTA_MANAGER.OPTIONS")
+      .bind<IQuotaManagerOptions>("XPROVIDER.QUOTA_MANAGER.OPTIONS")
       .toConstantValue(options);
     this.container
-      .bind<IXProviderQuotaManager>("XPROVIDER.QUOTA_MANAGER")
+      .bind<IQuotaManager>("XPROVIDER.QUOTA_MANAGER")
       .to(QuotaManager);
   }
 
   public setRotation(
-    Rotation: interfaces.Newable<IXProviderRotation>,
-    options: IXProviderRotationOptions
+    Rotation: interfaces.Newable<IRotation>,
+    options: IRotationOptions
   ) {
     this.container
-      .bind<IXProviderRotationOptions>("XPROVIDER.ROTATION.OPTIONS")
+      .bind<IRotationOptions>("XPROVIDER.ROTATION.OPTIONS")
       .toConstantValue(options);
-    this.container.bind<IXProviderRotation>("XPROVIDER.ROTATION").to(Rotation);
+    this.container.bind<IRotation>("XPROVIDER.ROTATION").to(Rotation);
   }
 
   public setProvider(Provider: interfaces.Newable<IXProvider>) {
@@ -95,20 +93,18 @@ export class Builder implements IBuilder {
   }
 
   public getDatasource() {
-    return this.container.get<IXProviderDatasource>("XPROVIDER.DATASOURCE");
+    return this.container.get<IDatasource>("XPROVIDER.DATASOURCE");
   }
 
   public getStorage() {
-    return this.container.get<IXProviderStorage>("XPROVIDER.STORAGE");
+    return this.container.get<IStorage>("XPROVIDER.STORAGE");
   }
 
   public getQuotaManager() {
-    return this.container.get<IXProviderQuotaManager>(
-      "XPROVIDER.QUOTA_MANAGER"
-    );
+    return this.container.get<IQuotaManager>("XPROVIDER.QUOTA_MANAGER");
   }
 
   public getRotation() {
-    return this.container.get<IXProviderRotation>("XPROVIDER.ROTATION");
+    return this.container.get<IRotation>("XPROVIDER.ROTATION");
   }
 }

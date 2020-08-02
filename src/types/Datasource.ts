@@ -1,7 +1,7 @@
 import { GenericObject } from "./Common";
 import { IXProviderEntity } from "./Provider";
 
-export interface IXProviderDatasource {
+export interface IDatasource {
   start(options?: any): Promise<void>;
   stop(options?: any): Promise<void>;
 
@@ -9,7 +9,7 @@ export interface IXProviderDatasource {
   deactivate(entity: IXProviderEntity): Promise<void>;
 }
 
-export interface IXProviderDatasourceOptions {
+export interface IDatasourceOptions {
   collection: string;
   conditions: GenericObject[];
 }

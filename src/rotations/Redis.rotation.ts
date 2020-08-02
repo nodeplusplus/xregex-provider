@@ -3,19 +3,15 @@ import { Redis, RedisOptions } from "ioredis";
 import { ILogger } from "@nodeplusplus/xregex-logger";
 import helpers from "@nodeplusplus/xregex-helpers";
 
-import {
-  Connection,
-  IXProviderRotation,
-  IXProviderRotationOptions,
-} from "../types";
+import { Connection, IRotation, IRotationOptions } from "../types";
 
 @injectable()
-export class RedisRotation implements IXProviderRotation {
+export class RedisRotation implements IRotation {
   @inject("LOGGER") private logger!: ILogger;
   @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
   @inject("XPROVIDER.ROTATION.OPTIONS")
-  private options!: IXProviderRotationOptions;
+  private options!: IRotationOptions;
 
   private redis!: Redis;
 

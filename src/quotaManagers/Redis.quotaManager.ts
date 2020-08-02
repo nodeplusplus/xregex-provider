@@ -5,18 +5,18 @@ import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IXProviderQuotaManager,
-  IXProviderQuotaManagerOptions,
+  IQuotaManager,
+  IQuotaManagerOptions,
   IXProviderQuota,
 } from "../types";
 
 @injectable()
-export class RedisQuotaManager implements IXProviderQuotaManager {
+export class RedisQuotaManager implements IQuotaManager {
   @inject("LOGGER") private logger!: ILogger;
   @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
   @inject("XPROVIDER.QUOTA_MANAGER.OPTIONS")
-  private options!: IXProviderQuotaManagerOptions;
+  private options!: IQuotaManagerOptions;
 
   private redis!: Redis;
 

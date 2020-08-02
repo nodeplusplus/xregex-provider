@@ -1,6 +1,6 @@
 import { create as createLogger } from "@nodeplusplus/xregex-logger";
 
-import { IDirector, IBuilder, IXProviderTemplate } from "../types";
+import { IDirector, IBuilder, ITemplate } from "../types";
 import { MongoDBDatasource, FileDatasource } from "../datasources";
 import { RedisStorage } from "../storages";
 import { RedisQuotaManager } from "../quotaManagers";
@@ -8,7 +8,7 @@ import { RedisRotation } from "../rotations";
 import { XProvider } from "../XProvider";
 
 export class Director implements IDirector {
-  constructFromTemplate(builder: IBuilder, template: IXProviderTemplate) {
+  constructFromTemplate(builder: IBuilder, template: ITemplate) {
     builder.registerConnections(template.connections);
     builder.setLogger(
       createLogger(template.logger.type, template.logger.options)

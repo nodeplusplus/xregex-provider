@@ -1,4 +1,4 @@
-export interface IXProviderQuotaManager {
+export interface IQuotaManager {
   start(options?: any): Promise<void>;
   stop(options?: any): Promise<void>;
 
@@ -11,7 +11,7 @@ export interface IXProviderQuotaManager {
   clear(): Promise<void>;
 }
 
-export interface IXProviderQuotaManagerOptions {
+export interface IQuotaManagerOptions {
   ratemLimits: { [name: string]: IXProviderQuota };
 }
 

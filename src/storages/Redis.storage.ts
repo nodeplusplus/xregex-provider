@@ -8,24 +8,24 @@ import helpers from "@nodeplusplus/xregex-helpers";
 import {
   Connection,
   IXProviderEntity,
-  IXProviderStorage,
-  IXProviderQuotaManager,
-  IXProviderRotation,
-  IXProviderStorageOptions,
+  IStorage,
+  IQuotaManager,
+  IRotation,
+  IStorageOptions,
   IXProviderOptions,
 } from "../types";
 
 @injectable()
-export class RedisStorage implements IXProviderStorage {
+export class RedisStorage implements IStorage {
   @inject("LOGGER") private logger!: ILogger;
   @inject("CONNECTIONS.REDIS") private connection!: Connection<RedisOptions>;
 
   @inject("XPROVIDER.STORAGE.OPTIONS")
-  private options!: IXProviderStorageOptions;
+  private options!: IStorageOptions;
   @inject("XPROVIDER.QUOTA_MANAGER")
-  private quotaManager!: IXProviderQuotaManager;
+  private quotaManager!: IQuotaManager;
   @inject("XPROVIDER.ROTATION")
-  private rotation!: IXProviderRotation;
+  private rotation!: IRotation;
 
   private redis!: Redis;
   private redlock!: Redlock;

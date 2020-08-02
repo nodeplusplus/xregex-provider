@@ -11,20 +11,20 @@ import helpers from "@nodeplusplus/xregex-helpers";
 
 import {
   Connection,
-  IXProviderDatasource,
-  IXProviderDatasourceOptions,
+  IDatasource,
+  IDatasourceOptions,
   IXProviderEntity,
 } from "../types";
 
 @injectable()
-export class MongoDBDatasource implements IXProviderDatasource {
+export class MongoDBDatasource implements IDatasource {
   @inject("LOGGER") private logger!: ILogger;
 
   @inject("CONNECTIONS.MONGODB") private connection!: Connection<
     MongoClientOptions
   >;
   @inject("XPROVIDER.DATASOURCE.OPTIONS")
-  private options!: IXProviderDatasourceOptions;
+  private options!: IDatasourceOptions;
 
   private client!: MongoClient;
   private db!: MongoClientDB;

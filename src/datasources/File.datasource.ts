@@ -4,18 +4,18 @@ import { ILogger } from "@nodeplusplus/xregex-logger";
 
 import {
   Connection,
-  IXProviderDatasource,
-  IXProviderDatasourceOptions,
+  IDatasource,
+  IDatasourceOptions,
   IXProviderEntity,
 } from "../types";
 
 @injectable()
-export class FileDatasource implements IXProviderDatasource {
+export class FileDatasource implements IDatasource {
   @inject("LOGGER") private logger!: ILogger;
 
   @inject("CONNECTIONS.FILE") private connection!: Connection;
   @inject("XPROVIDER.DATASOURCE.OPTIONS")
-  private options!: IXProviderDatasourceOptions;
+  private options!: IDatasourceOptions;
 
   private records: IXProviderEntity[] = [];
 

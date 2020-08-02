@@ -1,6 +1,6 @@
 import { IXProviderEntity, IXProviderOptions } from "./Provider";
 
-export interface IXProviderStorage {
+export interface IStorage {
   start(options?: any): Promise<void>;
   stop(options?: any): Promise<void>;
 
@@ -14,6 +14,6 @@ export interface IXProviderStorage {
   deactivate(id: string): Promise<void>;
 }
 
-export interface IXProviderStorageOptions {
+export interface IStorageOptions {
   name: string;
 }

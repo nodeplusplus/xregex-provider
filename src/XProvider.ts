@@ -7,9 +7,9 @@ import {
   IXProvider,
   IXProviderEntity,
   IXProviderOptions,
-  IXProviderQuotaManager,
-  IXProviderDatasource,
-  IXProviderStorage,
+  IQuotaManager,
+  IDatasource,
+  IStorage,
 } from "./types";
 
 @injectable()
@@ -17,11 +17,11 @@ export class XProvider implements IXProvider {
   @inject("LOGGER") private logger!: ILogger;
 
   @inject("XPROVIDER.QUOTA_MANAGER")
-  private quotaManager!: IXProviderQuotaManager;
+  private quotaManager!: IQuotaManager;
   @inject("XPROVIDER.STORAGE")
-  private storage!: IXProviderStorage;
+  private storage!: IStorage;
   @inject("XPROVIDER.DATASOURCE")
-  private datasource!: IXProviderDatasource;
+  private datasource!: IDatasource;
 
   public async start() {
     // We cannot use Promise.all here
