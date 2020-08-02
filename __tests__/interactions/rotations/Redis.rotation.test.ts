@@ -8,7 +8,7 @@ describe("Redis.rotation", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(builder, template);
+      new Director().constructFromTemplate(builder, template);
 
       const rotation = builder.getRotation();
       // Stop before start
@@ -24,7 +24,7 @@ describe("Redis.rotation", () => {
 
   describe("add", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const rotation = builder.getRotation();
 
     const collection = faker.random.word();
@@ -51,7 +51,7 @@ describe("Redis.rotation", () => {
 
   describe("includes", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(
+    new Director().constructFromTemplate(
       builder,
 
       // test with falsy expiresIn options
@@ -92,7 +92,7 @@ describe("Redis.rotation", () => {
 
   describe("find", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(
+    new Director().constructFromTemplate(
       builder,
       _.merge({}, template, { XProvider: { rotation: { expiresIn: 0 } } })
     );

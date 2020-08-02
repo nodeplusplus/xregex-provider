@@ -29,7 +29,7 @@ describe("XProvider", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(builder, template);
+      new Director().constructFromTemplate(builder, template);
 
       const xprovider = builder.getProvider();
       await xprovider.start();
@@ -39,7 +39,7 @@ describe("XProvider", () => {
 
   describe("acquire", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const xprovider = builder.getProvider();
     const quotaManager = builder.getQuotaManager();
 
@@ -78,7 +78,7 @@ describe("XProvider", () => {
 
   describe("release", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const xprovider = builder.getProvider();
     const quotaManager = builder.getQuotaManager();
 
@@ -112,7 +112,7 @@ describe("XProvider", () => {
 
   describe("deactivate", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const xprovider = builder.getProvider();
 
     const id = faker.random.uuid();
@@ -138,7 +138,7 @@ describe("XProvider", () => {
 
   describe("clear", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const xprovider = builder.getProvider();
 
     beforeAll(async () => {

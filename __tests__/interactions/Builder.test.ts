@@ -14,7 +14,7 @@ describe("Builder", () => {
     template.XProvider.rotation.type = "Unknown";
 
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
 
     const container = builder.getContainer();
 
@@ -41,7 +41,7 @@ describe("Builder", () => {
     container.bind("CONNECTIONS.REDIS").toConstantValue(redis);
 
     const builder = new Builder(container);
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
 
     expect(builder.getContainer().get("LOGGER")).toEqual(logger);
     expect(builder.getContainer().get("CONNECTIONS.REDIS")).toEqual(redis);

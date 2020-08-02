@@ -9,7 +9,7 @@ describe("Redis.storage", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(builder, template);
+      new Director().constructFromTemplate(builder, template);
 
       const storage = builder.getStorage();
       // Stop before start
@@ -25,7 +25,7 @@ describe("Redis.storage", () => {
 
   describe("serialize", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     beforeAll(async () => {
@@ -47,7 +47,7 @@ describe("Redis.storage", () => {
 
   describe("deserialize", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     beforeAll(async () => {
@@ -67,7 +67,7 @@ describe("Redis.storage", () => {
 
   describe("load", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     beforeAll(async () => {
@@ -90,7 +90,7 @@ describe("Redis.storage", () => {
 
   describe("lookup", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     // enrich total entities
@@ -180,7 +180,7 @@ describe("Redis.storage", () => {
 
   describe("get", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     const id = faker.random.uuid();
@@ -219,7 +219,7 @@ describe("Redis.storage", () => {
 
   describe("deactivate", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const storage = builder.getStorage();
 
     const id = faker.random.uuid();

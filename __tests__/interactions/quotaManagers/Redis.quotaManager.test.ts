@@ -7,7 +7,7 @@ describe("Redis.quotaManager", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(builder, template);
+      new Director().constructFromTemplate(builder, template);
 
       const quotaManager = builder.getQuotaManager();
       // Stop before start
@@ -23,7 +23,7 @@ describe("Redis.quotaManager", () => {
 
   describe("charge", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const quotaManager = builder.getQuotaManager();
 
     const id = faker.random.uuid();
@@ -56,7 +56,7 @@ describe("Redis.quotaManager", () => {
 
   describe("refund", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const quotaManager = builder.getQuotaManager();
 
     const id = faker.random.uuid();
@@ -91,7 +91,7 @@ describe("Redis.quotaManager", () => {
 
   describe("reached", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const quotaManager = builder.getQuotaManager();
 
     const id = faker.random.uuid();
@@ -118,7 +118,7 @@ describe("Redis.quotaManager", () => {
 
   describe("get", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const quotaManager = builder.getQuotaManager();
 
     const id = faker.random.uuid();
@@ -144,7 +144,7 @@ describe("Redis.quotaManager", () => {
 
   describe("getQuota", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     const quotaManager = builder.getQuotaManager();
 
     const id = faker.random.uuid();

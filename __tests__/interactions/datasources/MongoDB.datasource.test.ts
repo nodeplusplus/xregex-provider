@@ -10,7 +10,7 @@ describe("MongoDB.datasources", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(builder, template);
+      new Director().constructFromTemplate(builder, template);
 
       const datasource = builder.getDatasource();
       // Stop before start
@@ -26,7 +26,7 @@ describe("MongoDB.datasources", () => {
 
   describe("feed", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     let collection: MongoCollection;
 
     beforeAll(async () => {
@@ -54,7 +54,7 @@ describe("MongoDB.datasources", () => {
 
   describe("deactivate", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(builder, template);
+    new Director().constructFromTemplate(builder, template);
     let collection: MongoCollection;
 
     beforeAll(async () => {

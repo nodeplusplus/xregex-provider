@@ -25,7 +25,7 @@ describe("File.datasources", () => {
   describe("start/stop", () => {
     it("should start/stop successfully", async () => {
       const builder = new Builder();
-      new Director().constructProviderFromTemplate(
+      new Director().constructFromTemplate(
         builder,
         _.merge({}, template, { XProvider: { datasource: options } })
       );
@@ -40,7 +40,7 @@ describe("File.datasources", () => {
 
       try {
         const builder = new Builder();
-        new Director().constructProviderFromTemplate(
+        new Director().constructFromTemplate(
           builder,
           _.merge({}, template, {
             connections: {
@@ -65,7 +65,7 @@ describe("File.datasources", () => {
 
       try {
         const builder = new Builder();
-        new Director().constructProviderFromTemplate(
+        new Director().constructFromTemplate(
           builder,
           _.merge({}, template, {
             connections: {
@@ -90,7 +90,7 @@ describe("File.datasources", () => {
 
   describe("feed", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(
+    new Director().constructFromTemplate(
       builder,
       _.merge({}, template, { XProvider: { datasource: options } })
     );
@@ -116,7 +116,7 @@ describe("File.datasources", () => {
 
   describe("deactivate", () => {
     const builder = new Builder();
-    new Director().constructProviderFromTemplate(
+    new Director().constructFromTemplate(
       builder,
       _.merge({}, template, { XProvider: { datasource: options } })
     );
