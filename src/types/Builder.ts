@@ -41,7 +41,7 @@ export interface IBuilder {
   ): void;
   setProvider(Provider: interfaces.Newable<IXProvider>): void;
 
-  getContainer(): Container;
+  getContainer(): interfaces.Container;
   getProvider(): IXProvider;
   getDatasource(): IXProviderDatasource;
   getStorage(): IXProviderStorage;

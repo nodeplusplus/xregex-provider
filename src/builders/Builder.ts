@@ -16,10 +16,10 @@ import {
 } from "../types";
 
 export class Builder implements IBuilder {
-  private container: Container;
+  private container: interfaces.Container;
 
-  constructor(container = new Container({ defaultScope: "Singleton" })) {
-    this.container = container;
+  constructor(container?: interfaces.Container) {
+    this.container = container || new Container({ defaultScope: "Singleton" });
   }
 
   public registerConnections(connections: { [name: string]: any }) {
