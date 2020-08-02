@@ -8,10 +8,7 @@ import { RedisRotation } from "../rotations";
 import { XProvider } from "../XProvider";
 
 export class Director implements IDirector {
-  constructProviderFromTemplate(
-    builder: IBuilder,
-    template: IXProviderTemplate
-  ) {
+  constructFromTemplate(builder: IBuilder, template: IXProviderTemplate) {
     builder.registerConnections(template.connections);
     builder.setLogger(
       createLogger(template.logger.type, template.logger.options)

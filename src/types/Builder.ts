@@ -50,8 +50,5 @@ export interface IBuilder {
 }
 
 export interface IDirector {
-  constructProviderFromTemplate(
-    builder: IBuilder,
-    template: IXProviderTemplate
-  ): void;
+  constructFromTemplate(builder: IBuilder, template: IXProviderTemplate): void;
 }
