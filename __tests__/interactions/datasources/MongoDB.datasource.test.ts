@@ -8,7 +8,7 @@ const template = require("../../../mocks/template");
 
 describe("MongoDB.datasources", () => {
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(builder, template);
 
@@ -81,7 +81,7 @@ describe("MongoDB.datasources", () => {
       expect(records.filter((r) => r.deactivatedAt).length).toBe(1);
     });
 
-    it("should deactivate record successfully", async () => {
+    it("should deactivate record successful", async () => {
       const datasource = builder.getDatasource();
       const validRecords = await datasource.feed();
 

@@ -5,7 +5,7 @@ const template = require("../../../mocks/template");
 
 describe("Redis.quotaManager", () => {
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(builder, template);
 
@@ -37,7 +37,7 @@ describe("Redis.quotaManager", () => {
       await quotaManager.stop();
     });
 
-    it("should charge quota point successfully", async () => {
+    it("should charge quota point successful", async () => {
       quota++; // charged 1 quota point
       const point = await quotaManager.charge(id);
 
@@ -71,7 +71,7 @@ describe("Redis.quotaManager", () => {
       await quotaManager.stop();
     });
 
-    it("should refund quota with your point successfully", async () => {
+    it("should refund quota with your point successful", async () => {
       const refundQuota = faker.random.number({ min: 2, max: 10 });
       quota -= refundQuota;
 

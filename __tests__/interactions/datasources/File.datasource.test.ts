@@ -23,7 +23,7 @@ describe("File.datasources", () => {
   };
 
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(
         builder,

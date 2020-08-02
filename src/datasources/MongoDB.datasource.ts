@@ -43,6 +43,7 @@ export class MongoDBDatasource implements IDatasource {
 
   public async stop() {
     if (this.client) await helpers.mongodb.disconnect(this.client);
+    this.client = undefined as any;
 
     this.logger.info("XPROVIDER:DATASOURCE.MONGODB.STOPPED");
   }

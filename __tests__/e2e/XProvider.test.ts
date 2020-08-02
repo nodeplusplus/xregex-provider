@@ -27,12 +27,14 @@ describe("XProvider", () => {
   });
 
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(builder, template);
 
       const xprovider = builder.getProvider();
       await xprovider.start();
+      await xprovider.start();
+      await xprovider.stop();
       await xprovider.stop();
     });
   });
@@ -53,7 +55,7 @@ describe("XProvider", () => {
       await xprovider.stop();
     });
 
-    it("should acquire resource successfully", async () => {
+    it("should acquire resource successful", async () => {
       const [value, storageId] = await xprovider.acquire({ tags: [tag] });
 
       expect(value).toBeTruthy();
@@ -93,7 +95,7 @@ describe("XProvider", () => {
       await xprovider.stop();
     });
 
-    it("should release resource successfully", async () => {
+    it("should release resource successful", async () => {
       const [, storageId] = await xprovider.acquire({ tags: [tag] });
       expect(await quotaManager.get(storageId as string)).toBe(1);
 
@@ -129,7 +131,7 @@ describe("XProvider", () => {
       expect(await xprovider.deactivate(id)).toBeUndefined();
     });
 
-    it("should deactivate successfully", async () => {
+    it("should deactivate successful", async () => {
       const [, storageId] = await xprovider.acquire({ tags: ["proxy"] });
 
       expect(await xprovider.deactivate(storageId as string)).toBe(storageId);
@@ -149,7 +151,7 @@ describe("XProvider", () => {
       await xprovider.stop();
     });
 
-    it("should clear all items successfully", async () => {
+    it("should clear all items successful", async () => {
       await xprovider.clear();
 
       const keys = await redis.keys("*");

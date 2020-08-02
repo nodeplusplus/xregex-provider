@@ -6,7 +6,7 @@ const template = require("../../../mocks/template");
 
 describe("Redis.rotation", () => {
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(builder, template);
 

@@ -7,7 +7,7 @@ const resources = require("../../../mocks/resources");
 
 describe("Redis.storage", () => {
   describe("start/stop", () => {
-    it("should start/stop successfully", async () => {
+    it("should start/stop successful", async () => {
       const builder = new Builder();
       new Director().constructFromTemplate(builder, template);
 
@@ -36,7 +36,7 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should return serialized data successfully", () => {
+    it("should return serialized data successful", () => {
       expect(storage.serialize(false)).toBe(JSON.stringify(false));
       expect(storage.serialize(null)).toBe(JSON.stringify(null));
 
@@ -58,7 +58,7 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should return parsed data successfully", () => {
+    it("should return parsed data successful", () => {
       const data = { id: faker.random.uuid() };
 
       expect(storage.deserialize(storage.serialize(data))).toEqual(data);
@@ -78,7 +78,7 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should load all entities successfully", async () => {
+    it("should load all entities successful", async () => {
       const entities = await storage.load(resources);
 
       const status = Object.values(entities);
@@ -193,7 +193,7 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should return entity successfully", async () => {
+    it("should return entity successful", async () => {
       const entity: IXProviderEntity = {
         id,
         tags: [],
@@ -232,7 +232,7 @@ describe("Redis.storage", () => {
       await storage.stop();
     });
 
-    it("should remove entity successfully", async () => {
+    it("should remove entity successful", async () => {
       const entity: IXProviderEntity = {
         id,
         tags: [],

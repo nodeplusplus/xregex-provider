@@ -47,6 +47,7 @@ export class RedisStorage implements IStorage {
 
     if (this.redlock) await this.redlock.quit();
     if (this.redis) await helpers.redis.disconnect(this.redis);
+    this.redis = undefined as any;
 
     this.logger.info("XPROVIDER:STORAGE.REDIS.STOPPED");
   }

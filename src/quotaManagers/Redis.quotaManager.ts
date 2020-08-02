@@ -31,6 +31,7 @@ export class RedisQuotaManager implements IQuotaManager {
 
   public async stop() {
     if (this.redis) await helpers.redis.disconnect(this.redis);
+    this.redis = undefined as any;
 
     this.logger.info("XPROVIDER:QUOTA_MANAGER.REDIS.STOPPED");
   }
